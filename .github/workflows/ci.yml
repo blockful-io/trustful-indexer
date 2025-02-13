@@ -1,0 +1,43 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'yarn'
+
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile
+
+    - name: Generate SubQuery types
+      run: yarn codegen
+
+    - name: Build project
+      run: yarn build
+
+    - name: Run tests
+      run: yarn test
+      if: false  # Commented out since test command wasn't visible in the provided files
+
+    # Optional: Add Docker build step if needed
+    - name: Build Docker image
+      run: docker-compose build
+      if: github.ref == 'refs/heads/main'
+
+    # Optional: Add deployment steps here
+    # - name: Deploy
+    #   if: github.ref == 'refs/heads/main'
+    #   run: echo "Add deployment steps here" 
