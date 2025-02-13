@@ -34,117 +34,21 @@ The simplest way to run your project is by running `yarn dev` or `npm run-script
 
 You can observe the three services start, and once all are running (it may take a few minutes on your first start), please open your browser and head to [http://localhost:3000](http://localhost:3000) - you should see a GraphQL playground showing with the schemas ready to query. [Read the docs for more information](https://academy.subquery.network/run_publish/run.html) or [explore the possible service configuration for running SubQuery](https://academy.subquery.network/run_publish/references.html).
 
-## Query your project
+## Variables
 
-For this project, you can try to query with the following GraphQL code to get a taste of how it works.
+To run the project in testnet, you need to set the following variables in the .env.develop file:
 
-```graphql
-{
-  query {
-    transfers(first: 5, orderBy: VALUE_DESC) {
-      totalCount
-      nodes {
-        id
-        date
-        ledger
-        toId
-        fromId
-        value
-      }
-    }
-    accounts(first: 5, orderBy: SENT_TRANSFERS_COUNT_DESC) {
-      nodes {
-        id
-        sentTransfers(first: 5, orderBy: LEDGER_DESC) {
-          totalCount
-          nodes {
-            id
-            toId
-            value
-          }
-        }
-        firstSeenLedger
-        lastSeenLedger
-      }
-    }
-  }
-}
-```
+```.env
+ENDPOINT="https://horizon-testnet.stellar.org"
+CHAIN_ID="Test SDF Network ; September 2015"
+SOROBAN_ENDPOINT="https://soroban-testnet.stellar.org"
+START_BLOCK=1089948
+``` 
 
-Results:
+to run the project in mainnet, you need to set the following variables in the .env.develop file:
 
-```
-{
-  "data": {
-    "query": {
-      "transfers": {
-        "totalCount": 0,
-        "nodes": []
-      },
-      "accounts": {
-        "nodes": [
-          {
-            "id": "gbtbdklzbabdgnpvdygchqzxqxkjfu73ayhls44j7u26ti6lzvlzfg5a",
-            "sentTransfers": {
-              "totalCount": 0,
-              "nodes": []
-            },
-            "firstSeenLedger": 1700000,
-            "lastSeenLedger": 1700000
-          },
-          {
-            "id": "gdea4efymx2vcx7hduurwvuy6de36qihe6faouhuzaldgul4ooq5euvu",
-            "sentTransfers": {
-              "totalCount": 0,
-              "nodes": []
-            },
-            "firstSeenLedger": 1700000,
-            "lastSeenLedger": 1700000
-          },
-          {
-            "id": "gcbwgcat2nhokpnr2toy6o3qdky22lzzeydwh4azhdyyl57qfu53ugzr",
-            "sentTransfers": {
-              "totalCount": 0,
-              "nodes": []
-            },
-            "firstSeenLedger": 1700000,
-            "lastSeenLedger": 1700000
-          },
-          {
-            "id": "gb7yga2xmamr6wqb2z5c4l6s2imudrqzu7zxdpr4df2dewcxpxhmzjy5",
-            "sentTransfers": {
-              "totalCount": 0,
-              "nodes": []
-            },
-            "firstSeenLedger": 1700000,
-            "lastSeenLedger": 1700000
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-You can explore the different possible queries and entities to help you with GraphQL using the documentation draw on the right.
-
-## Publish your project
-
-SubQuery is open-source and designed to be easy to run, meaning you have the freedom to run it a variety of ways:
-
-- [Locally on your own computer or on your cloud provider of choice.](https://academy.subquery.network/indexer/run_publish/introduction.html#locally-run-it-yourself)
-- [By publishing it to the decentralised SubQuery Network](https://academy.subquery.network/indexer/run_publish/introduction.html#publish-to-the-subquery-network), the most open, performant, reliable, and scalable data service for dApp developers.
-- [Leveraging a centralised hosting partner in the SubQuery community](https://academy.subquery.network/indexer/run_publish/introduction.html#other-hosting-providers-in-the-subquery-community), like OnFinality or Traceye.
-
-## What Next?
-
-Take a look at some of our advanced features to take your project to the next level!
-
-- [**Multi-chain indexing support**](https://academy.subquery.network/build/multi-chain.html) - SubQuery allows you to index data from across different layer-1 networks into the same database, this allows you to query a single endpoint to get data for all supported networks.
-- [**Dynamic Data Sources**](https://academy.subquery.network/build/dynamicdatasources.html) - When you want to index factory contracts, for example on a DEX or generative NFT project.
-- [**Project Optimisation Advice**](https://academy.subquery.network/build/optimisation.html) - Some common tips on how to tweak your project to maximise performance.
-- [**GraphQL Subscriptions**](https://academy.subquery.network/run_publish/subscription.html) - Build more reactive front end applications that subscribe to changes in your SubQuery project.
-
-## Need Help?
-
-The fastest way to get support is by [searching our documentation](https://academy.subquery.network), or by [joining our discord](https://discord.com/invite/subquery) and messaging us in the `#technical-support` channel.
+```.env
+ENDPOINT="https://horizon.stellar.org"
+CHAIN_ID="Public Global Stellar Network ; September 2015"
+SOROBAN_ENDPOINT="https://soroban-rpc.mainnet.stellar.gateway.fm"
+START_BLOCK=50460000
