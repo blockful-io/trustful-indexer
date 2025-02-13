@@ -80,3 +80,27 @@ type Debit @entity {
   account: Account!
   amount: String!
 }
+
+type UserAddition @entity {
+  id: ID! # This will be the event ID
+  """
+  The block number when this event occurred
+  """
+  ledger: Int!
+  """
+  Timestamp of when this event occurred
+  """
+  timestamp: Date!
+  """
+  The account that added the user (sender)
+  """
+  sender: Account!
+  """
+  The account that was added (user)
+  """
+  user: Account!
+  """
+  The contract that emitted this event
+  """
+  contract: String!
+}

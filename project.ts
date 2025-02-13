@@ -8,10 +8,14 @@ import { Horizon } from "@stellar/stellar-sdk";
 import * as dotenv from 'dotenv';
 import path from 'path';
 
-const mode = process.env.NODE_ENV || 'production';
+// Get environment from .env file
+const dotenvBasePath = path.resolve(__dirname, '.env');
+dotenv.config({ path: dotenvBasePath });
 
-// Load the appropriate .env file
-const dotenvPath = path.resolve(__dirname, `.env${mode !== 'production' ? `.${mode}` : ''}`);
+const mode = process.env.NODE_ENV || 'mainnet';
+
+// Load the appropriate .env file based on mode
+const dotenvPath = path.resolve(__dirname, `.env.${mode}`);
 dotenv.config({ path: dotenvPath });
 
 /* This is your project configuration */
@@ -53,13 +57,13 @@ const project: StellarProject = {
     endpoint: process.env.ENDPOINT!?.split(',') as string[] | string,
     /* This is a specific Soroban endpoint
       It is only required when you are using a soroban/EventHandler */
-    sorobanEndpoint: "https://soroban-rpc.mainnet.stellar.gateway.fm",
+     sorobanEndpoint: process.env.SOROBAN_ENDPOINT!,
   },
   dataSources: [
     {
       kind: StellarDatasourceKind.Runtime,
       /* Set this as a logical start block, it might be block 1 (genesis) or when your contract was deployed */
-      startBlock: 50460000,
+      startBlock: parseInt(process.env.START_BLOCK!),
       mapping: {
         file: "./dist/index.js",
         handlers: [
@@ -92,6 +96,16 @@ const project: StellarProject = {
                 contractId: "" */
               topics: [
                 "transfer", // Topic signature(s) for the events, there can be up to 4
+              ],
+            },
+          },
+          {
+            handler: "handleScorerUserAdd",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: [
+                "user", // Main topic
+                "add",  // Sub-topic
               ],
             },
           },
