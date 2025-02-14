@@ -64,3 +64,4 @@ services:
       - --name=app
       - --playground
       - --indexer=http://subquery-node:3000
+      - --cors=*
