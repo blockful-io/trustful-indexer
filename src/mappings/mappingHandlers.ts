@@ -14,6 +14,85 @@ import { xdr } from "@stellar/stellar-sdk";
 
 const MOCK_COMMUNITY_ID = "community-1";
 
+export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): Promise<void> {
+  if (!event.ledger) throw new Error('Event ledger is null');
+  try {
+    const addresses = typeof event.value.value === 'function' 
+      ? event.value.value() 
+      : event.value.value;
+    if (!Array.isArray(addresses)) {
+      logger.error('addresses is not an array');
+      logger.error(`addresses type: ${typeof addresses}`);
+      logger.error(`addresses value: ${JSON.stringify(addresses, null, 2)}`);
+      return;
+    }
+    if (addresses.length < 2) {
+      logger.error('addresses array does not have 2 elements');
+      logger.error(`addresses length: ${addresses.length}`);
+      logger.error(`addresses: ${JSON.stringify(addresses, null, 2)}`);
+      return;
+    }
+    // First item is the deployer, second is the scorer contract
+    const deployerScVal = addresses[0];
+    const scorerAddressScVal = addresses[1];
+    const deployerAddress = decodeAddress(deployerScVal as xdr.ScVal);
+    const scorerAddress = decodeAddress(scorerAddressScVal as xdr.ScVal);
+    
+    // Create or get accounts
+    const deployerAccount = await checkAndGetAccount(
+      deployerAddress,
+      event.ledger.sequence
+    );
+    const scorerAccount = await checkAndGetAccount(
+      scorerAddress,
+      event.ledger.sequence
+    );
+
+    // Create community record
+    const communityId = scorerAddress.toLowerCase(); // Using scorer contract address as community ID
+    let community = await Community.get(communityId);
+    
+    if (!community) {
+      community = Community.create({
+        id: communityId,
+        issuer: deployerAddress.toLowerCase(),
+        // These fields will come from the event in the future
+        // For now using placeholder values
+        name: `Community ${communityId.slice(0, 8)}`, // Temporary name using first 8 chars of ID
+        description: "Description pending", // Placeholder
+        totalMembers: 0
+      });
+
+      /* 
+      // TODO: Uncomment and modify when event includes name and description
+      community = Community.create({
+        id: communityId,
+        issuer: deployerAddress.toLowerCase(),
+        name: event.value.name,
+        description: event.value.description,
+        totalMembers: 0
+      });
+      */
+    }
+
+    // Update account last seen ledger
+    deployerAccount.lastSeenLedger = event.ledger.sequence;
+    scorerAccount.lastSeenLedger = event.ledger.sequence;
+
+    // Save all entities
+    await Promise.all([
+      deployerAccount.save(),
+      scorerAccount.save(),
+      community.save()
+    ]);
+
+  } catch (e) {
+    logger.error(`Failed to process community creation event: ${e}`);
+    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    throw e;
+  }
+}
+
 export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
   if (!event.ledger) throw new Error('Event ledger is null');
   logger.info(
@@ -22,6 +101,8 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
   try {
     logger.info('Debug info:');
     logger.info(`event.value type: ${typeof event.value}`);
+    const scorerAddress = event.contractId?.contractId().toString() ?? '';
+    logger.info(`Scorer address: ${scorerAddress}`);
     
     // Tenta acessar value() como função
     const addresses = typeof event.value.value === 'function' 
@@ -74,19 +155,14 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     userAccount.lastSeenLedger = event.ledger.sequence;
 
     // Get or create the mock community
-    let community = await Community.get(MOCK_COMMUNITY_ID);
+    let community = await Community.get(scorerAddress.toLowerCase());
     if (!community) {
-      community = Community.create({
-        id: MOCK_COMMUNITY_ID,
-        issuer: "mock-issuer",
-        name: "Mock Community",
-        description: "A mock community for testing",
-        totalMembers: 0
-      });
+      logger.error(`Community not found for scorer address: ${scorerAddress}`);
+      return;
     }
 
     // Create community member
-    const memberId = `${MOCK_COMMUNITY_ID}-${userAddress.toLowerCase()}`;
+    const memberId = `${community.id}-${userAddress.toLowerCase()}`;
     let member = await CommunityMember.get(memberId);
     
     if (!member) {
@@ -94,7 +170,7 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
         id: memberId,
         userId: userAddress.toLowerCase(),
         communityId: community.id,
-        score: 1.0, // Mock initial score
+        score: 0, // Mock initial score
         lastScoreUpdate: event.ledgerClosedAt.toString()
       });
       

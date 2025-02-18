@@ -77,6 +77,13 @@ const project: StellarProject = {
               ],
             },
           },
+          {
+            handler: "handlerScorerFactoryCreateCommunity",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: ["scorer", "create"],
+            },
+          }
         ],
       },
     },
