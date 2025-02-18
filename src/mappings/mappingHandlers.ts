@@ -1,4 +1,4 @@
-import { Account, Credit, Debit, Payment, Transfer, UserAddition } from "../types";
+import { Account, UserAddition, Community, CommunityMember } from "../types";
 import {
   StellarOperation,
   StellarEffect,
@@ -12,47 +12,85 @@ import { Horizon } from "@stellar/stellar-sdk";
 import { Address } from "@stellar/stellar-sdk";
 import { xdr } from "@stellar/stellar-sdk";
 
-export async function handleOperation(
-  op: StellarOperation<Horizon.HorizonApi.PaymentOperationResponse>,
-): Promise<void> {
-  logger.info(`Indexing operation ${op.id}, type: ${op.type}`);
+const MOCK_COMMUNITY_ID = "community-1";
 
-  if (!op.ledger) throw new Error('Operation ledger is null');
-  const fromAccount = await checkAndGetAccount(op.from, op.ledger.sequence);
-  const toAccount = await checkAndGetAccount(op.to, op.ledger.sequence);
+export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): Promise<void> {
+  if (!event.ledger) throw new Error('Event ledger is null');
+  try {
+    const addresses = typeof event.value.value === 'function' 
+      ? event.value.value() 
+      : event.value.value;
+    if (!Array.isArray(addresses)) {
+      logger.error('addresses is not an array');
+      logger.error(`addresses type: ${typeof addresses}`);
+      logger.error(`addresses value: ${JSON.stringify(addresses, null, 2)}`);
+      return;
+    }
+    if (addresses.length < 2) {
+      logger.error('addresses array does not have 2 elements');
+      logger.error(`addresses length: ${addresses.length}`);
+      logger.error(`addresses: ${JSON.stringify(addresses, null, 2)}`);
+      return;
+    }
+    // First item is the deployer, second is the scorer contract
+    const deployerScVal = addresses[0];
+    const scorerAddressScVal = addresses[1];
+    const deployerAddress = decodeAddress(deployerScVal as xdr.ScVal);
+    const scorerAddress = decodeAddress(scorerAddressScVal as xdr.ScVal);
+    
+    // Create or get accounts
+    const deployerAccount = await checkAndGetAccount(
+      deployerAddress,
+      event.ledger.sequence
+    );
+    const scorerAccount = await checkAndGetAccount(
+      scorerAddress,
+      event.ledger.sequence
+    );
 
-  const payment = Payment.create({
-    id: op.id,
-    fromId: fromAccount.id,
-    toId: toAccount.id,
-    txHash: op.transaction_hash,
-    amount: op.amount,
-  });
+    // Create community record
+    const communityId = scorerAddress.toLowerCase(); // Using scorer contract address as community ID
+    let community = await Community.get(communityId);
+    
+    if (!community) {
+      community = Community.create({
+        id: communityId,
+        issuer: deployerAddress.toLowerCase(),
+        // These fields will come from the event in the future
+        // For now using placeholder values
+        name: `Community ${communityId.slice(0, 8)}`, // Temporary name using first 8 chars of ID
+        description: "Description pending", // Placeholder
+        totalMembers: 0
+      });
 
-  fromAccount.lastSeenLedger = op.ledger.sequence;
-  toAccount.lastSeenLedger = op.ledger.sequence;
-  await Promise.all([fromAccount.save(), toAccount.save(), payment.save()]);
-}
+      /* 
+      // TODO: Uncomment and modify when event includes name and description
+      community = Community.create({
+        id: communityId,
+        issuer: deployerAddress.toLowerCase(),
+        name: event.value.name,
+        description: event.value.description,
+        totalMembers: 0
+      });
+      */
+    }
 
-export async function handleCredit(
-  effect: StellarEffect<AccountCredited>,
-): Promise<void> {
-  logger.info(`Indexing effect ${effect.id}, type: ${effect.type}`);
+    // Update account last seen ledger
+    deployerAccount.lastSeenLedger = event.ledger.sequence;
+    scorerAccount.lastSeenLedger = event.ledger.sequence;
 
-  if (!effect.ledger) throw new Error('Effect ledger is null');
-  const account = await checkAndGetAccount(
-    effect.account,
-    effect.ledger.sequence,
-  );
+    // Save all entities
+    await Promise.all([
+      deployerAccount.save(),
+      scorerAccount.save(),
+      community.save()
+    ]);
 
-  const credit = Credit.create({
-    id: effect.id,
-    accountId: account.id,
-    amount: effect.amount,
-  });
-
-  account.lastSeenLedger = effect.ledger.sequence;
-  await Promise.all([account.save(), credit.save()]);
+  } catch (e) {
+    logger.error(`Failed to process community creation event: ${e}`);
+    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    throw e;
+  }
 }
 
 export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
@@ -63,6 +101,8 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
   try {
     logger.info('Debug info:');
     logger.info(`event.value type: ${typeof event.value}`);
+    const scorerAddress = event.contractId?.contractId().toString() ?? '';
+    logger.info(`Scorer address: ${scorerAddress}`);
     
     // Tenta acessar value() como função
     const addresses = typeof event.value.value === 'function' 
@@ -105,7 +145,7 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     const userAddition = UserAddition.create({
       id: event.id,
       ledger: event.ledger.sequence,
-      timestamp: new Date(event.ledgerClosedAt),
+      timestamp: event.ledgerClosedAt.toString(),
       senderId: senderAccount.id,
       userId: userAccount.id,
       contract: event.contractId?.contractId().toString() ?? ''
@@ -113,83 +153,44 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     // Atualizar lastSeenLedger para ambas as contas
     senderAccount.lastSeenLedger = event.ledger.sequence;
     userAccount.lastSeenLedger = event.ledger.sequence;
+
+    // Get or create the mock community
+    let community = await Community.get(scorerAddress.toLowerCase());
+    if (!community) {
+      logger.error(`Community not found for scorer address: ${scorerAddress}`);
+      return;
+    }
+
+    // Create community member
+    const memberId = `${community.id}-${userAddress.toLowerCase()}`;
+    let member = await CommunityMember.get(memberId);
+    
+    if (!member) {
+      member = CommunityMember.create({
+        id: memberId,
+        userId: userAddress.toLowerCase(),
+        communityId: community.id,
+        score: 0, // Mock initial score
+        lastScoreUpdate: event.ledgerClosedAt.toString()
+      });
+      
+      // Increment total members
+      community.totalMembers += 1;
+    }
+
     // Salvar todas as entidades
     await Promise.all([
       senderAccount.save(),
       userAccount.save(),
-      userAddition.save()
+      userAddition.save(),
+      community.save(),
+      member.save()
     ]);
   } catch (e) {
     logger.error(`Failed to process user add event: ${e}`);
     logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
-}
-
-export async function handleDebit(
-  effect: StellarEffect<AccountDebited>,
-): Promise<void> {
-  logger.info(`Indexing effect ${effect.id}, type: ${effect.type}`);
-
-  if (!effect.ledger) throw new Error('Effect ledger is null');
-  const account = await checkAndGetAccount(
-    effect.account,
-    effect.ledger.sequence,
-  );
-
-  const debit = Debit.create({
-    id: effect.id,
-    accountId: account.id,
-    amount: effect.amount,
-  });
-
-  account.lastSeenLedger = effect.ledger.sequence;
-  await Promise.all([account.save(), debit.save()]);
-}
-
-export async function handleEvent(event: SorobanEvent): Promise<void> {
-  if (!event.ledger) throw new Error('Event ledger is null');
-  logger.info(
-    `New transfer event found at block ${event.ledger.sequence.toString()}`,
-  );
-
-  // Get data from the event
-  // The transfer event has the following payload \[env, from, to\]
-  // logger.info(JSON.stringify(event));
-  const {
-    topic: [env, from, to],
-  } = event;
-
-  try {
-    decodeAddress(from);
-    decodeAddress(to);
-  } catch (e) {
-    logger.info(`decode address failed`);
-  }
-
-  const fromAccount = await checkAndGetAccount(
-    decodeAddress(from),
-    event.ledger.sequence,
-  );
-  const toAccount = await checkAndGetAccount(
-    decodeAddress(to),
-    event.ledger.sequence,
-  );
-
-  // Create the new transfer entity
-  const transfer = Transfer.create({
-    id: event.id,
-    ledger: event.ledger.sequence,
-    date: new Date(event.ledgerClosedAt),
-    contract: event.contractId?.contractId().toString()!,
-    fromId: fromAccount.id,
-    toId: toAccount.id,
-    value: BigInt(event.value.toString()),
-  });
-
-  fromAccount.lastSeenLedger = event.ledger.sequence;
-  toAccount.lastSeenLedger = event.ledger.sequence;
-  await Promise.all([fromAccount.save(), toAccount.save(), transfer.save()]);
 }
 
 async function checkAndGetAccount(
