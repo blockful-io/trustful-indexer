@@ -32,6 +32,16 @@ The simplest way to run your project is by running `yarn dev` or `npm run-script
 2.  `yarn build` - Builds and packages the SubQuery project into the `/dist` directory
 3.  `docker-compose pull && docker-compose up` - Runs a Docker container with an indexer, PostgeSQL DB, and a query service. This requires [Docker to be installed](https://docs.docker.com/engine/install) and running locally. The configuration for this container is set from your `docker-compose.yml`
 
+If running for the first time, or maybe wants to reset the database:
+```sh
+docker-compose down -v
+docker rm -f $(docker ps -a -q)  
+docker volume rm $(docker volume ls -q)  
+rm -rf .data
+rm -rf dist
+yarn codegen
+yarn build
+```
 You can observe the three services start, and once all are running (it may take a few minutes on your first start), please open your browser and head to [http://localhost:3000](http://localhost:3000) - you should see a GraphQL playground showing with the schemas ready to query. [Read the docs for more information](https://academy.subquery.network/run_publish/run.html) or [explore the possible service configuration for running SubQuery](https://academy.subquery.network/run_publish/references.html).
 
 ## Variables
