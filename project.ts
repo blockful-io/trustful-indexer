@@ -78,6 +78,16 @@ const project: StellarProject = {
             },
           },
           {
+            handler: "handleScorerUserRemove",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics:[
+                "user", 
+                "remove",
+              ]
+            }
+          },
+          {
             handler: "handlerScorerFactoryCreateCommunity",
             kind: StellarHandlerKind.Event,
             filter: {

@@ -108,9 +108,7 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     const addresses = typeof event.value.value === 'function' 
       ? event.value.value() 
       : event.value.value;
-    
-    logger.info(`addresses after function call type: ${typeof addresses}`);
-    logger.info(`addresses after function call: ${JSON.stringify(addresses, null, 2)}`);
+
     if (!Array.isArray(addresses)) {
       logger.error('addresses is not an array');
       logger.error(`addresses type: ${typeof addresses}`);
@@ -126,8 +124,6 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     // Primeiro item é o sender, segundo é o user
     const senderScVal = addresses[0];
     const userScVal = addresses[1];
-    logger.info(`Sender ScVal: ${JSON.stringify(senderScVal, null, 2)}`);
-    logger.info(`User ScVal: ${JSON.stringify(userScVal, null, 2)}`);
     const senderAddress = decodeAddress(senderScVal as xdr.ScVal);
     const userAddress = decodeAddress(userScVal as xdr.ScVal);
     logger.info(`Decoded sender address: ${senderAddress}`);
@@ -192,6 +188,91 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     throw e;
   }
 }
+
+export async function handleScorerUserRemove(event: SorobanEvent): Promise<void> {
+  if (!event.ledger) throw new Error('Event ledger is null');
+  logger.info(
+    `User remove event found at block ${event.ledger.sequence.toString()}`
+  );
+  try {
+    logger.info('Debug info:');
+    logger.info(`event.value type: ${typeof event.value}`);
+    const scorerAddress = event.contractId?.contractId().toString() ?? '';
+    logger.info(`Scorer address: ${scorerAddress}`);
+    
+    // Tenta acessar value() como função
+    const addresses = typeof event.value.value === 'function' 
+      ? event.value.value() 
+      : event.value.value;
+
+    if (!Array.isArray(addresses)) {
+      logger.error('addresses is not an array');
+      logger.error(`addresses type: ${typeof addresses}`);
+      logger.error(`addresses value: ${JSON.stringify(addresses, null, 2)}`);
+      return;
+    }
+    if (addresses.length < 2) {
+      logger.error('addresses array does not have 2 elements');
+      logger.error(`addresses length: ${addresses.length}`);
+      logger.error(`addresses: ${JSON.stringify(addresses, null, 2)}`);
+      return;
+    }
+    // Primeiro item é o sender, segundo é o user
+    const senderScVal = addresses[0];
+    const userScVal = addresses[1];
+    const senderAddress = decodeAddress(senderScVal as xdr.ScVal);
+    const userAddress = decodeAddress(userScVal as xdr.ScVal);
+    logger.info(`Decoded sender address: ${senderAddress}`);
+    logger.info(`Decoded user address: ${userAddress}`);
+
+    // Criar ou obter as contas
+    const senderAccount = await checkAndGetAccount(
+      senderAddress,
+      event.ledger.sequence
+    );
+    const userAccount = await checkAndGetAccount(
+      userAddress,
+      event.ledger.sequence
+    );
+
+    senderAccount.lastSeenLedger = event.ledger.sequence;
+    userAccount.lastSeenLedger = event.ledger.sequence;
+
+    // Get the community
+    let community = await Community.get(scorerAddress.toLowerCase());
+    if (!community) {
+      logger.error(`Community not found for scorer address: ${scorerAddress}`);
+      return;
+    }
+
+    // Create community member
+    const memberId = `${community.id}-${userAddress.toLowerCase()}`;
+    let member = await CommunityMember.get(memberId);
+    
+    if (!member) {
+      logger.error("User, does not exist and cant be removed.")
+    }
+
+    await CommunityMember.remove(memberId);
+    
+    // Decrement total members
+    community.totalMembers -= 1;
+
+    // Salvar todas as entidades
+    await Promise.all([
+      senderAccount.save(),
+      userAccount.save(),
+      community.save(),
+    ]);
+
+  } catch (e) {
+    logger.error(`Failed to process user remove event: ${e}`);
+    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    throw e;
+  }
+}
+
+
 
 async function checkAndGetAccount(
   id: string,
