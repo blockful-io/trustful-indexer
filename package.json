@@ -15,8 +15,8 @@
     "docker:network": "docker network create subql-network || true",
     "start:local:subquery-node": "npm run docker:network && docker run --rm --name subquery-node --network subql-network -p 3000:3000 -v $(pwd):/app --env-file .env subquerynetwork/subql-node-stellar:latest ${SUB_COMMAND:-} -f=/app --db-schema=app --workers=1 --batch-size=5 --unsafe",
     "start:local:graphql-engine": "docker run --rm --name graphql-engine --network subql-network -p 3001:3000 --env-file .env subquerynetwork/subql-query:latest --name=app --playground --indexer=http://subquery-node:3000",
-    "docker:build:node": "docker build -f docker/subquery-node.Dockerfile -t subquery-node .",
-    "docker:build:graphql": "docker build -f docker/graphql-engine.Dockerfile -t graphql-engine .",
+    "docker:build:node": "sudo docker build -f docker/subquery-node.Dockerfile -t subquery-node .",
+    "docker:build:graphql": "sudo docker build -f docker/graphql-engine.Dockerfile -t graphql-engine .",
     "docker:build": "npm run docker:build:node && npm run docker:build:graphql"
   
   },
