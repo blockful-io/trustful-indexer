@@ -23,4 +23,4 @@ RUN yarn build
 USER node
 
 # Comando para iniciar o serviço
-CMD ["node", "/usr/local/lib/node_modules/@subql/node-stellar/dist/main.js", "-f=/app", "--db-schema=app", "--workers=1", "--batch-size=5", "--unsafe"]
+CMD ["--name=app", "--playground", "--indexer=http://subquery-node:3000"]
