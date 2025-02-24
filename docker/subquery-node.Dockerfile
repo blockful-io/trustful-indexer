@@ -19,10 +19,6 @@ RUN yarn install
 RUN yarn codegen
 RUN yarn build
 
-# Voltar para root para instalar postgresql-client
-USER root
-RUN apt-get update && apt-get install -y postgresql-client
-
 # Mudar novamente para o usuário node para executar a aplicação
 USER node
 
