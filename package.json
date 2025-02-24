@@ -22,10 +22,11 @@
   "author": "SubQuery Team",
   "license": "MIT",
   "dependencies": {
+    "@stellar/stellar-sdk": "latest",
     "@subql/common": "latest",
     "@subql/types-stellar": "latest",
-    "@stellar/stellar-sdk": "latest",
-    "@types/node": "^16.0.0"
+    "@types/node": "^16.0.0",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@subql/cli": "latest",

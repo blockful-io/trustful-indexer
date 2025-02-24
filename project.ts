@@ -68,38 +68,6 @@ const project: StellarProject = {
         file: "./dist/index.js",
         handlers: [
           {
-            handler: "handleOperation",
-            kind: StellarHandlerKind.Operation,
-            filter: {
-              type: Horizon.HorizonApi.OperationResponseType.payment,
-            },
-          },
-          {
-            handler: "handleCredit",
-            kind: StellarHandlerKind.Effects,
-            filter: {
-              type: "account_credited",
-            },
-          },
-          {
-            handler: "handleDebit",
-            kind: StellarHandlerKind.Effects,
-            filter: {
-              type: "account_debited",
-            },
-          },
-          {
-            handler: "handleEvent",
-            kind: StellarHandlerKind.Event,
-            filter: {
-              /* You can optionally specify a smart contract address here
-                contractId: "" */
-              topics: [
-                "transfer", // Topic signature(s) for the events, there can be up to 4
-              ],
-            },
-          },
-          {
             handler: "handleScorerUserAdd",
             kind: StellarHandlerKind.Event,
             filter: {
@@ -109,6 +77,23 @@ const project: StellarProject = {
               ],
             },
           },
+          {
+            handler: "handleScorerUserRemove",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics:[
+                "user", 
+                "remove",
+              ]
+            }
+          },
+          {
+            handler: "handlerScorerFactoryCreateCommunity",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: ["scorer", "create"],
+            },
+          }
         ],
       },
     },
