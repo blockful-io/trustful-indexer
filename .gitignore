@@ -5,7 +5,6 @@
 
 # Node artifact files
 node_modules/
-dist/
 
 # lock files
 
@@ -25,7 +24,6 @@ package-lock.json
 
 # Generated files
 target/
-dist/
 src/types
 
 
