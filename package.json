@@ -10,7 +10,6 @@
     "docker:build:graphql": "sudo docker build -f docker/graphql-engine.Dockerfile -t graphql-engine .",
     "docker:build": "npm run docker:build:node && npm run docker:build:graphql",
     "start:local:subquery-node": "docker run --rm --name subquery-node -p 3000:3000 -v $(pwd):/app --env-file .env subquery-node"
-  
   },
   "homepage": "https://github.com/subquery/stellar-subql-starter",
   "repository": "github:subquery/stellar-subql-starter",
