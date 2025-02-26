@@ -6,18 +6,10 @@
   "scripts": {
     "build": "subql codegen && subql build",
     "codegen": "subql codegen",
-    "start:docker": "docker-compose pull && docker-compose up --remove-orphans",
-    "dev": "subql codegen && subql build && docker-compose pull && docker-compose up --remove-orphans",
-    "prepack": "rm -rf dist && npm run build",
-    "test": "subql build && subql-node-stellar test",
-    "build:develop": "NODE_ENV=develop subql codegen && NODE_ENV=develop subql build",
-    "start:postgres": "docker run --name postgres -p 5432:5432 -v .data/postgres:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres postgres:16-alpine",
-    "docker:network": "docker network create subql-network || true",
-    "start:local:subquery-node": "npm run docker:network && docker run --rm --name subquery-node --network subql-network -p 3000:3000 -v $(pwd):/app --env-file .env subquerynetwork/subql-node-stellar:latest ${SUB_COMMAND:-} -f=/app --db-schema=app --workers=1 --batch-size=5 --unsafe",
-    "start:local:graphql-engine": "docker run --rm --name graphql-engine --network subql-network -p 3001:3000 --env-file .env subquerynetwork/subql-query:latest --name=app --playground --indexer=http://subquery-node:3000",
     "docker:build:node": "sudo docker build -f docker/subquery-node.Dockerfile -t subquery-node .",
     "docker:build:graphql": "sudo docker build -f docker/graphql-engine.Dockerfile -t graphql-engine .",
-    "docker:build": "npm run docker:build:node && npm run docker:build:graphql"
+    "docker:build": "npm run docker:build:node && npm run docker:build:graphql",
+    "start:local:subquery-node": "docker run --rm --name subquery-node -p 3000:3000 -v $(pwd):/app --env-file .env subquery-node"
   
   },
   "homepage": "https://github.com/subquery/stellar-subql-starter",
