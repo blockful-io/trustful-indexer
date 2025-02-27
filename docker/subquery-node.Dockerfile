@@ -22,4 +22,4 @@ RUN npm install
 
 EXPOSE 3000
 
-CMD ["subql-node-stellar", "-f=/app", "--db-schema=public", "--workers=1", "--batch-size=1", "--unsafe", "--log-level=debug", "--create-db-schema"]
+ENTRYPOINT ["subql-node-stellar", "-f=/app", "--db-schema=public", "--workers=1", "--batch-size=1", "--unsafe", "--log-level=debug", "--create-db-schema"]
