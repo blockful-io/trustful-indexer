@@ -72,8 +72,8 @@ const project: StellarProject = {
             kind: StellarHandlerKind.Event,
             filter: {
               topics: [
-                "user", // Main topic
-                "add",  // Sub-topic
+                "user",
+                "add", 
               ],
             },
           },
