@@ -3,7 +3,6 @@ import {
   StellarHandlerKind,
   StellarProject,
 } from "@subql/types-stellar";
-import { Horizon } from "@stellar/stellar-sdk";
 
 import * as dotenv from 'dotenv';
 import path from 'path';
@@ -73,7 +72,7 @@ const project: StellarProject = {
             filter: {
               topics: [
                 "user",
-                "add", 
+                "add",  
               ],
             },
           },
@@ -92,6 +91,7 @@ const project: StellarProject = {
             kind: StellarHandlerKind.Event,
             filter: {
               topics: ["scorer", "create"],
+              contractId: process.env.SCORER_FACTORY_CONTRACT_ID!,
             },
           }
         ],

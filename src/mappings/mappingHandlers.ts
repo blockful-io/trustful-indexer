@@ -104,6 +104,13 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     const scorerAddress = event.contractId?.contractId().toString() ?? '';
     logger.info(`Scorer address: ${scorerAddress}`);
     
+    // Get community
+    let community = await Community.get(scorerAddress.toLowerCase());
+    if (!community) {
+      logger.error(`Community not found for scorer address: ${scorerAddress}`);
+      return;
+    }
+        
     // Tenta acessar value() como função
     const addresses = typeof event.value.value === 'function' 
       ? event.value.value() 
@@ -150,13 +157,6 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     senderAccount.lastSeenLedger = event.ledger.sequence;
     userAccount.lastSeenLedger = event.ledger.sequence;
 
-    // Get or create the mock community
-    let community = await Community.get(scorerAddress.toLowerCase());
-    if (!community) {
-      logger.error(`Community not found for scorer address: ${scorerAddress}`);
-      return;
-    }
-
     // Create community member
     const memberId = `${community.id}-${userAddress.toLowerCase()}`;
     let member = await CommunityMember.get(memberId);
@@ -199,7 +199,14 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
     logger.info(`event.value type: ${typeof event.value}`);
     const scorerAddress = event.contractId?.contractId().toString() ?? '';
     logger.info(`Scorer address: ${scorerAddress}`);
-    
+
+    // Get community
+    let community = await Community.get(scorerAddress.toLowerCase());
+    if (!community) {
+      logger.error(`Community not found for scorer address: ${scorerAddress}`);
+      return;
+    }
+
     // Tenta acessar value() como função
     const addresses = typeof event.value.value === 'function' 
       ? event.value.value() 
@@ -237,13 +244,6 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
 
     senderAccount.lastSeenLedger = event.ledger.sequence;
     userAccount.lastSeenLedger = event.ledger.sequence;
-
-    // Get the community
-    let community = await Community.get(scorerAddress.toLowerCase());
-    if (!community) {
-      logger.error(`Community not found for scorer address: ${scorerAddress}`);
-      return;
-    }
 
     // Create community member
     const memberId = `${community.id}-${userAddress.toLowerCase()}`;
