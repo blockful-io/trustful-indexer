@@ -37,6 +37,8 @@ export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): 
     const scorerAddressScVal = addresses[1];
     const deployerAddress = decodeAddress(deployerScVal as xdr.ScVal);
     const scorerAddress = decodeAddress(scorerAddressScVal as xdr.ScVal);
+    const name = decodeString(addresses[2] as xdr.ScVal);
+    const description = decodeString(addresses[3] as xdr.ScVal);
     
     // Create or get accounts
     const deployerAccount = await checkAndGetAccount(
@@ -56,23 +58,10 @@ export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): 
       community = Community.create({
         id: communityId,
         issuer: deployerAddress.toLowerCase(),
-        // These fields will come from the event in the future
-        // For now using placeholder values
-        name: `Community ${communityId.slice(0, 8)}`, // Temporary name using first 8 chars of ID
-        description: "Description pending", // Placeholder
+        name: name,
+        description: description,
         totalMembers: 0
       });
-
-      /* 
-      // TODO: Uncomment and modify when event includes name and description
-      community = Community.create({
-        id: communityId,
-        issuer: deployerAddress.toLowerCase(),
-        name: event.value.name,
-        description: event.value.description,
-        totalMembers: 0
-      });
-      */
     }
 
     // Update account last seen ledger
@@ -295,5 +284,20 @@ function decodeAddress(scVal: xdr.ScVal): string {
     return Address.account(scVal.address().accountId().ed25519()).toString();
   } catch (e) {
     return Address.contract(scVal.address().contractId()).toString();
+  }
+}
+
+// Function to decode string values from ScVal
+function decodeString(scVal: xdr.ScVal): string {
+  try {
+    if (scVal.switch().name === 'scvString') {
+      return scVal.str().toString();
+    } else {
+      logger.error(`Expected string ScVal but got ${scVal.switch().name}`);
+      return '';
+    }
+  } catch (e) {
+    logger.error(`Failed to decode string from ScVal: ${e}`);
+    return '';
   }
 }
