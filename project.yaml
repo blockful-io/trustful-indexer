@@ -22,7 +22,7 @@ network:
   sorobanEndpoint: https://soroban-testnet.stellar.org
 dataSources:
   - kind: stellar/Runtime
-    startBlock: 1343449
+    startBlock: 1484911
     mapping:
       file: ./dist/index.js
       handlers:
@@ -44,3 +44,4 @@ dataSources:
             topics:
               - scorer
               - create
+            contractId: CC46OW34JFJ25GXU6YQI2OIPROHDPPSON5YAHGXUSWDPLJMN4N7TB6X7
