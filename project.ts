@@ -17,6 +17,23 @@ const mode = process.env.NODE_ENV || 'mainnet';
 const dotenvPath = path.resolve(__dirname, `.env.${mode}`);
 dotenv.config({ path: dotenvPath });
 
+const testnetEndpoints = [
+  "https://horizon-testnet.stellar.org",
+  "https://rpc.ankr.com/http/stellar_testnet_horizon",
+  "https://stellar-testnet.publicnode.com",
+];
+
+const mainnetEndpoints = [
+  "https://horizon.stellar.org",
+  "https://rpc.ankr.com/http/stellar_horizon",
+  "https://stellar.publicnode.com",
+];
+
+const defaultEndpoints = mode === 'mainnet' ? mainnetEndpoints : testnetEndpoints;
+
+const configuredEndpoints = process.env.ENDPOINT?.split(',') || [];
+const endpoints = configuredEndpoints.length > 0 ? configuredEndpoints : defaultEndpoints;
+
 /* This is your project configuration */
 const project: StellarProject = {
   specVersion: "1.0.0",
