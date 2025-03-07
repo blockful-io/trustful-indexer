@@ -18,7 +18,9 @@ schema:
 network:
   chainId: Test SDF Network ; September 2015
   endpoint:
+    - https://horizon-testnet.stellar.org
     - https://rpc.ankr.com/http/stellar_testnet_horizon
+    - https://stellar-testnet.publicnode.com
   sorobanEndpoint: https://soroban-testnet.stellar.org
 dataSources:
   - kind: stellar/Runtime
