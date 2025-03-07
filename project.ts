@@ -73,7 +73,6 @@ const project: StellarProject = {
     endpoint: [
       "https://horizon-testnet.stellar.org",
       "https://rpc.ankr.com/http/stellar_testnet_horizon",
-      "https://stellar-testnet.publicnode.com"
     ],
     /* This is a specific Soroban endpoint
       It is only required when you are using a soroban/EventHandler */
