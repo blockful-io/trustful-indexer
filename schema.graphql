@@ -21,6 +21,7 @@ type Community @entity {
   name: String!
   description: String
   totalMembers: Int!
+  isHidden: Boolean
   members: [CommunityMember!]! @derivedFrom(field: "community")
 }
 

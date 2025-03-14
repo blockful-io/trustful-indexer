@@ -16,6 +16,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - subquery
 
   subquery-node:
     image: subquerynetwork/subql-node-stellar:latest
@@ -34,7 +36,7 @@ services:
     command:
       - ${SUB_COMMAND:-} # set SUB_COMMAND env variable to "test" to run tests
       - -f=/app
-      - --db-schema=app
+      - --db-schema=public
       - --workers=1 # The more the faster
       - --batch-size=5 # The higher the faster, set low to avoid rate limit on SDF endpoint
       - --unsafe
@@ -43,6 +45,8 @@ services:
       interval: 3s
       timeout: 5s
       retries: 10
+    networks:
+      - subquery
 
   graphql-engine:
     image: subquerynetwork/subql-query:latest
@@ -65,3 +69,9 @@ services:
       - --playground
       - --indexer=http://subquery-node:3000
       - --cors=*
+    networks:
+      - subquery
+
+networks:
+  subquery:
+    driver: bridge

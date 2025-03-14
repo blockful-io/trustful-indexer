@@ -60,7 +60,8 @@ export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): 
         issuer: deployerAddress.toLowerCase(),
         name: name,
         description: description,
-        totalMembers: 0
+        totalMembers: 0,
+        isHidden: false
       });
     }
 
