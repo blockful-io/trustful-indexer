@@ -17,6 +17,23 @@ const mode = process.env.NODE_ENV || 'mainnet';
 const dotenvPath = path.resolve(__dirname, `.env.${mode}`);
 dotenv.config({ path: dotenvPath });
 
+const testnetEndpoints = [
+  "https://horizon-testnet.stellar.org",
+  "https://rpc.ankr.com/http/stellar_testnet_horizon",
+  "https://stellar-testnet.publicnode.com",
+];
+
+const mainnetEndpoints = [
+  "https://horizon.stellar.org",
+  "https://rpc.ankr.com/http/stellar_horizon",
+  "https://stellar.publicnode.com",
+];
+
+const defaultEndpoints = mode === 'mainnet' ? mainnetEndpoints : testnetEndpoints;
+
+const configuredEndpoints = process.env.ENDPOINT?.split(',') || [];
+const endpoints = configuredEndpoints.length > 0 ? configuredEndpoints : defaultEndpoints;
+
 /* This is your project configuration */
 const project: StellarProject = {
   specVersion: "1.0.0",
@@ -53,10 +70,13 @@ const project: StellarProject = {
      * These settings can be found in your docker-compose.yaml, they will slow indexing but prevent your project being rate limited
      * You can find RPC endpoints for Stellar here https://soroban.stellar.org/docs/reference/rpc-list
      */
-    endpoint: process.env.ENDPOINT!?.split(',') as string[] | string,
+    endpoint: [
+      "https://horizon-testnet.stellar.org",
+      "https://rpc.ankr.com/http/stellar_testnet_horizon",
+    ],
     /* This is a specific Soroban endpoint
       It is only required when you are using a soroban/EventHandler */
-     sorobanEndpoint: process.env.SOROBAN_ENDPOINT!,
+    sorobanEndpoint: process.env.SOROBAN_ENDPOINT!,
   },
   dataSources: [
     {
