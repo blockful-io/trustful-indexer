@@ -107,10 +107,68 @@ const project: StellarProject = {
             }
           },
           {
+            handler: "handleScorerManagerAdd",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: [
+                "manager",
+                "add",
+              ],
+            },
+          },
+          {
+            handler: "handleScorerManagerRemove",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: [
+                "manager",
+                "remove",
+              ],
+            },
+          },
+          {
+            handler: "handleScorerInit",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: [
+                "init",
+                "contract",
+              ],
+            },
+          },
+          {
+            handler: "handleScorerBadgeAdd",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: [
+                "badge",
+                "add",
+              ],
+            },
+          },
+          {
+            handler: "handleScorerBadgeRemove",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: [
+                "badge",
+                "remove",
+              ],
+            },
+          },
+          {
             handler: "handlerScorerFactoryCreateCommunity",
             kind: StellarHandlerKind.Event,
             filter: {
               topics: ["scorer", "create"],
+              contractId: process.env.SCORER_FACTORY_CONTRACT_ID!,
+            },
+          },
+          {
+            handler: "handlerScorerFactoryRemoveCommunity",
+            kind: StellarHandlerKind.Event,
+            filter: {
+              topics: ["scorer", "remove"],
               contractId: process.env.SCORER_FACTORY_CONTRACT_ID!,
             },
           }

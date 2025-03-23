@@ -23,7 +23,7 @@ network:
   sorobanEndpoint: https://soroban-testnet.stellar.org
 dataSources:
   - kind: stellar/Runtime
-    startBlock: 1484911
+    startBlock: 14355
     mapping:
       file: ./dist/index.js
       handlers:
@@ -39,10 +39,47 @@ dataSources:
             topics:
               - user
               - remove
+        - handler: handleScorerManagerAdd
+          kind: soroban/EventHandler
+          filter:
+            topics:
+              - manager
+              - add
+        - handler: handleScorerManagerRemove
+          kind: soroban/EventHandler
+          filter:
+            topics:
+              - manager
+              - remove
+        - handler: handleScorerInit
+          kind: soroban/EventHandler
+          filter:
+            topics:
+              - init
+              - contract
+        - handler: handleScorerBadgeAdd
+          kind: soroban/EventHandler
+          filter:
+            topics:
+              - badge
+              - add
+        - handler: handleScorerBadgeRemove
+          kind: soroban/EventHandler
+          filter:
+            topics:
+              - badge
+              - remove
         - handler: handlerScorerFactoryCreateCommunity
           kind: soroban/EventHandler
           filter:
             topics:
               - scorer
               - create
-            contractId: CC46OW34JFJ25GXU6YQI2OIPROHDPPSON5YAHGXUSWDPLJMN4N7TB6X7
+            contractId: CB6U2W3AJNUEYFDVT5MEXOTEUEMHM5P64XKN2S5KUHI26HBGJBT7CULH
+        - handler: handlerScorerFactoryRemoveCommunity
+          kind: soroban/EventHandler
+          filter:
+            topics:
+              - scorer
+              - remove
+            contractId: CB6U2W3AJNUEYFDVT5MEXOTEUEMHM5P64XKN2S5KUHI26HBGJBT7CULH
