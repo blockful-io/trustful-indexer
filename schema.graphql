@@ -1,35 +1,59 @@
-type Account @entity {
-  id: ID! 
-  firstSeenLedger: Int!
-  lastSeenLedger: Int
-  userAdditionsAsSender: [UserAddition!]! @derivedFrom(field: "sender")
-  userAdditionsAsUser: [UserAddition!]! @derivedFrom(field: "user")
-}
-
-type UserAddition @entity {
+type User @entity {
   id: ID!
-  ledger: Int!
-  timestamp: String!
-  sender: Account! @index
-  user: Account! @index
-  contract: String!
+  userAddress: String! @index
+  communityMemberships: [CommunityMember!]! @derivedFrom(field: "user")
+  badges: [UserBadge!]! @derivedFrom(field: "user")
 }
 
 type Community @entity {
   id: ID!
-  issuer: String!
+  communityAddress: String! @index
+  factoryAddress: String @index
   name: String!
   description: String
-  totalMembers: Int!
-  isHidden: Boolean
+  creatorAddress: String! @index
+  isHidden: Boolean!
+  blocktimestamp: BigInt!
+  totalBadges: Int!
+  lastIndexedAt: BigInt!
   members: [CommunityMember!]! @derivedFrom(field: "community")
+  badges: [Badge!]! @derivedFrom(field: "community")
 }
 
 type CommunityMember @entity {
   id: ID!
-  userId: String!
+  userAddress: String! @index
+  isManager: Boolean! @index  # Com índice para consultas eficientes
+  isCreator: Boolean!
+  communityAddress: String! @index
+  lastIndexedAt: BigInt!
+  points: Int!
+  user: User! @index
   community: Community! @index
-  score: Float!
-  lastScoreUpdate: String
 }
 
+type Badge @entity {
+  id: ID!
+  issuer: String! @index
+  communityAddress: String! @index
+  name: String! @index
+  score: Int!
+  type: String! @index
+  createdAt: BigInt
+  removedAt: BigInt
+  community: Community! @index
+  userBadges: [UserBadge!]! @derivedFrom(field: "badge")
+}
+
+type UserBadge @entity {
+  id: ID!
+  userAddress: String! @index
+  issuer: String! @index
+  communityAddress: String! @index
+  name: String! @index
+  createdAt: BigInt
+  user: User! @index
+  badge: Badge! @index
+  community: Community! @index
+  communityMember: CommunityMember! @index
+}
