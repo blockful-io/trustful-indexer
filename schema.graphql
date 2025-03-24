@@ -11,6 +11,7 @@ type Community @entity {
   factoryAddress: String @index
   name: String!
   description: String
+  icon: String
   creatorAddress: String! @index
   isHidden: Boolean!
   blocktimestamp: BigInt!
