@@ -671,7 +671,7 @@ async function extractAndCreateBadge(
       communityAddress: communityAddress,
       name: badgeName,
       score: score,
-      type: 'standard',
+      type: 'custom',
       createdAt: BigInt(Date.parse(ledgerClosedAt || '') || 0),
       removedAt: undefined,
       communityId: communityAddress
