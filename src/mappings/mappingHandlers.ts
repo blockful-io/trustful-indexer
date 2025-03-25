@@ -822,7 +822,7 @@ export async function handleScorerBadgeAdd(event: SorobanEvent): Promise<void> {
         communityAddress: communityAddress,
         name: badgeName,
         score: score,
-        type: 'standard', // Default type
+        type: 'custom', // Default type
         createdAt: BigInt(Date.parse(event.ledgerClosedAt || '') || 0),
         removedAt: undefined,
         communityId: communityAddress
