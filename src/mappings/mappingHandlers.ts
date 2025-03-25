@@ -718,7 +718,7 @@ async function processBadgesVector(
           communityAddress: community.id,
           name: badgeName,
           score: score,
-          type: 'standard',
+          type: 'Custom',
           createdAt: BigInt(Date.parse(ledgerClosedAt || '') || 0),
           removedAt: undefined,
           communityId: community.id
