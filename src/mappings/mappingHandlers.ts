@@ -626,23 +626,11 @@ async function extractAndCreateBadge(
   const nameScVal = keyObj._value[0];
   const addressScVal = keyObj._value[1];
   
-  if (!nameScVal || !addressScVal || addressScVal._switch?.name !== 'scvAddress') {
+  if (nameScVal._switch?.name !== 'scvString' || !addressScVal || addressScVal._switch?.name !== 'scvAddress') {
     return null;
   }
   
-  // Default name based on index
-  let badgeName = `Badge_${index+1}`;
-  
-  // Try to extract real name if possible
-  if (nameScVal._switch?.name === 'scvString') {
-    if (nameScVal._value?.data && Array.isArray(nameScVal._value.data)) {
-      badgeName = Buffer.from(nameScVal._value.data).toString();
-    } else if (typeof nameScVal._value === 'string') {
-      badgeName = nameScVal._value;
-    }
-  } else if (nameScVal._switch?.name === 'scvSymbol' && nameScVal._value) {
-    badgeName = nameScVal._value.toString();
-  }
+  let badgeName = nameScVal.str().toString();
   
   // Extract issuer address
   let issuerAddress;
