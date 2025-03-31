@@ -23,7 +23,7 @@ network:
   sorobanEndpoint: https://soroban-testnet.stellar.org
 dataSources:
   - kind: stellar/Runtime
-    startBlock: 207720
+    startBlock: 210350
     mapping:
       file: ./dist/index.js
       handlers:
@@ -75,11 +75,11 @@ dataSources:
             topics:
               - scorer
               - create
-            contractId: CDM3CUMH3KNV5VCI5PVRU64JA5CARV77ITBMM3Q63CQ5DRIXVQSYHFTZ
+            contractId: CBUUV6HRJYAUI24GPZTIKKPBMD5RYHTA2BBSIBK6N63EHV35LTP6L3FZ
         - handler: handlerScorerFactoryRemoveCommunity
           kind: soroban/EventHandler
           filter:
             topics:
               - scorer
               - remove
-            contractId: CDM3CUMH3KNV5VCI5PVRU64JA5CARV77ITBMM3Q63CQ5DRIXVQSYHFTZ
+            contractId: CBUUV6HRJYAUI24GPZTIKKPBMD5RYHTA2BBSIBK6N63EHV35LTP6L3FZ
