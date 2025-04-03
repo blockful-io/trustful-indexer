@@ -16,14 +16,13 @@ repository: https://github.com/subquery/stellar-subql-starter
 schema:
   file: ./schema.graphql
 network:
-  chainId: Test SDF Network ; September 2015
+  chainId: Public Global Stellar Network ; September 2015
   endpoint:
-    - https://horizon-testnet.stellar.org
-    - https://rpc.ankr.com/http/stellar_testnet_horizon
-  sorobanEndpoint: https://soroban-testnet.stellar.org
+    - https://horizon.stellar.org/
+  sorobanEndpoint: https://soroban-rpc.mainnet.stellar.gateway.fm
 dataSources:
   - kind: stellar/Runtime
-    startBlock: 210350
+    startBlock: 56420397
     mapping:
       file: ./dist/index.js
       handlers:
@@ -75,11 +74,11 @@ dataSources:
             topics:
               - scorer
               - create
-            contractId: CBUUV6HRJYAUI24GPZTIKKPBMD5RYHTA2BBSIBK6N63EHV35LTP6L3FZ
+            contractId: CBVQVSWZWDTIPJ46A6U7KIHTEP7PHRL5ZG5LNRKHO5OAV2CHNXVY5D2R
         - handler: handlerScorerFactoryRemoveCommunity
           kind: soroban/EventHandler
           filter:
             topics:
               - scorer
               - remove
-            contractId: CBUUV6HRJYAUI24GPZTIKKPBMD5RYHTA2BBSIBK6N63EHV35LTP6L3FZ
+            contractId: CBVQVSWZWDTIPJ46A6U7KIHTEP7PHRL5ZG5LNRKHO5OAV2CHNXVY5D2R
