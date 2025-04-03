@@ -36,15 +36,29 @@ export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): 
     // Create user if doesn't exist
     await checkAndGetUser(deployerAddress);
     
-    // Create community record
-    const communityAddress = scorerAddress.toLowerCase(); // Using scorer contract address as community ID
-    let community = await getValidCommunity(communityAddress, 'CreateCommunity');
+    // Get the factory address
+    const factoryAddress = event.contractId?.contractId().toString().toLowerCase();
     
-    if (!community) {
+    // Using scorer contract address as community ID
+    const communityAddress = scorerAddress.toLowerCase();
+    
+    // Check if community already exists from init event
+    let community = await Community.get(communityAddress);
+    
+    if (community) {
+      // Community already exists, update with factory address
+      if (!community.factoryAddress && factoryAddress) {
+        logger.info(`Updating existing community ${communityAddress} with factory address ${factoryAddress}`);
+        community.factoryAddress = factoryAddress;
+        community.lastIndexedAt = BigInt(Date.now());
+        await community.save();
+      }
+    } else {
+      // Community doesn't exist yet, create with available information
       community = Community.create({
         id: communityAddress,
         communityAddress: communityAddress,
-        factoryAddress: event.contractId?.contractId().toString().toLowerCase() ?? '',
+        factoryAddress: factoryAddress,
         name: name,
         description: description,
         creatorAddress: deployerAddress.toLowerCase(),
@@ -362,11 +376,13 @@ export async function handleScorerInit(event: SorobanEvent): Promise<void> {
     await checkAndGetUser(creatorAddress);
     
     // Check if community already exists
-    let community = await getValidCommunity(communityAddress, 'ScorerInit');
+    let community = await Community.get(communityAddress);
+    
     if (!community) {
-      // Create new community
+      // Create new community without factory address (will be filled by factory event handler)
       community = await createCommunity(
         communityAddress, 
+        "", // Empty factory address for now
         creatorAddress, 
         communityData.name, 
         communityData.description, 
@@ -378,6 +394,34 @@ export async function handleScorerInit(event: SorobanEvent): Promise<void> {
       await processManagers(values[1], community, creatorAddress, event.ledgerClosedAt);
       
       // Process badges map
+      await processBadges(values[2], community, creatorAddress, event.ledgerClosedAt);
+    } else {
+      // Community exists, update with additional data if needed
+      let needsUpdate = false;
+      
+      if (!community.name && communityData.name) {
+        community.name = communityData.name;
+        needsUpdate = true;
+      }
+      
+      if (!community.description && communityData.description) {
+        community.description = communityData.description;
+        needsUpdate = true;
+      }
+      
+      if (!community.icon && communityData.icon) {
+        community.icon = communityData.icon;
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
+        community.lastIndexedAt = BigInt(Date.now());
+        await community.save();
+        logger.info(`Updated existing community ${communityAddress} with data from init event`);
+      }
+      
+      // Always process managers and badges as they might be updated
+      await processManagers(values[1], community, creatorAddress, event.ledgerClosedAt);
       await processBadges(values[2], community, creatorAddress, event.ledgerClosedAt);
     }
   } catch (e) {
@@ -443,6 +487,7 @@ function extractCommunityData(nameScVal: any, descriptionScVal: any, iconScVal: 
  */
 async function createCommunity(
   communityAddress: string,
+  factoryAddress: string,
   creatorAddress: string,
   name: string,
   description: string,
@@ -452,7 +497,7 @@ async function createCommunity(
   const community = Community.create({
     id: communityAddress,
     communityAddress: communityAddress,
-    factoryAddress: process.env.SCORER_FACTORY_CONTRACT_ID,
+    factoryAddress: factoryAddress,
     name: name,
     description: description,
     icon: icon,
