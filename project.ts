@@ -11,27 +11,22 @@ import path from 'path';
 const dotenvBasePath = path.resolve(__dirname, '.env');
 dotenv.config({ path: dotenvBasePath });
 
-const mode = process.env.NODE_ENV || 'mainnet';
-
-// Load the appropriate .env file based on mode
-const dotenvPath = path.resolve(__dirname, `.env.${mode}`);
-dotenv.config({ path: dotenvPath });
-
 const testnetEndpoints = [
-  "https://horizon-testnet.stellar.org",
   "https://rpc.ankr.com/http/stellar_testnet_horizon",
+  "https://horizon-testnet.stellar.org",
+  "https://lb.nodies.app/v1/b4138b83de73401284f25ff83b9ce30d"
 ];
 
 const mainnetEndpoints = [
   "https://horizon.stellar.org",
   "https://rpc.ankr.com/http/stellar_horizon",
-  "https://stellar.publicnode.com",
+  "https://lb.nodies.app/v1/b07564ed2a8f40fcba62614a34ae1767",
 ];
 
+const mode = process.env.NODE_ENV || 'testnet';
 const defaultEndpoints = mode === 'mainnet' ? mainnetEndpoints : testnetEndpoints;
 
-const configuredEndpoints = process.env.ENDPOINT?.split(',') || [];
-const endpoints = configuredEndpoints.length > 0 ? configuredEndpoints : defaultEndpoints;
+const endpoints = process.env.ENDPOINT ? [process.env.ENDPOINT] : defaultEndpoints;
 
 /* This is your project configuration */
 const project: StellarProject = {

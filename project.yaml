@@ -18,7 +18,9 @@ schema:
 network:
   chainId: Public Global Stellar Network ; September 2015
   endpoint:
-    - https://horizon.stellar.org/
+    - https://horizon.stellar.org
+    - https://rpc.ankr.com/http/stellar_horizon
+    - https://lb.nodies.app/v1/b07564ed2a8f40fcba62614a34ae1767
   sorobanEndpoint: https://soroban-rpc.mainnet.stellar.gateway.fm
 dataSources:
   - kind: stellar/Runtime
