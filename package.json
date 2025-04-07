@@ -4,6 +4,7 @@
   "description": "This project can be use as a starting point for developing your new Stellar Soroban SubQuery project",
   "main": "dist/index.js",
   "scripts": {
+    "prebuild": "ts-node -e \"require('fs').writeFileSync('project.yaml', '# // Auto-generated , DO NOT EDIT\\n' + require('yaml').stringify(require('./project').default))\"",
     "build": "subql codegen && subql build",
     "codegen": "subql codegen",
     "dev": "subql codegen && subql build && docker-compose pull && docker-compose up --remove-orphans",
