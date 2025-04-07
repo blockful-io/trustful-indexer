@@ -18,12 +18,13 @@ schema:
 network:
   chainId: Test SDF Network ; September 2015
   endpoint:
-    - https://horizon-testnet.stellar.org
     - https://rpc.ankr.com/http/stellar_testnet_horizon
+    - https://horizon-testnet.stellar.org
+    - https://lb.nodies.app/v1/b4138b83de73401284f25ff83b9ce30d
   sorobanEndpoint: https://soroban-testnet.stellar.org
 dataSources:
   - kind: stellar/Runtime
-    startBlock: 210350
+    startBlock: 326750
     mapping:
       file: ./dist/index.js
       handlers:
@@ -75,11 +76,11 @@ dataSources:
             topics:
               - scorer
               - create
-            contractId: CBUUV6HRJYAUI24GPZTIKKPBMD5RYHTA2BBSIBK6N63EHV35LTP6L3FZ
+            contractId: CDAYITQNHRKI4776QLVKCGBGANZLKFGKMEFGCO7QDOEJDJJGT47MS7H6
         - handler: handlerScorerFactoryRemoveCommunity
           kind: soroban/EventHandler
           filter:
             topics:
               - scorer
               - remove
-            contractId: CBUUV6HRJYAUI24GPZTIKKPBMD5RYHTA2BBSIBK6N63EHV35LTP6L3FZ
+            contractId: CDAYITQNHRKI4776QLVKCGBGANZLKFGKMEFGCO7QDOEJDJJGT47MS7H6
