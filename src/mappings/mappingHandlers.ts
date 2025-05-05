@@ -237,17 +237,22 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
       return;
     }
 
-    const addresses = typeof event.value.value === 'function' 
+    // Get the raw value from the event
+    const rawValue = typeof event.value.value === 'function' 
       ? event.value.value() 
       : event.value.value;
-
-    if (!Array.isArray(addresses)) {
-      logger.error(`Invalid addresses format: ${JSON.stringify(addresses)}`);
+    
+    // Process as direct ScAddress object like in UserAdd
+    logger.info(`Processing in direct ScAddress format`);
+    
+    let userAddress: string;
+    try {
+      userAddress = decodeScAddress(rawValue);
+      logger.info(`Successfully decoded user address: ${userAddress}`);
+    } catch (decodeError) {
+      logger.error(`Failed to decode ScAddress: ${decodeError}`);
       return;
     }
-    
-    const userScVal = addresses[0]; // The user remove event only has the user
-    const userAddress = decodeAddress(userScVal as xdr.ScVal);
     
     // Find community member
     const memberId = `${communityAddress}-${userAddress.toLowerCase()}`;
