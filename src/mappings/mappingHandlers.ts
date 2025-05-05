@@ -154,14 +154,28 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     // Create user if doesn't exist
     await checkAndGetUser(userAddress);
     
-    // Create community member
-    await createCommunityMember(
-      communityAddress,
-      userAddress.toLowerCase(),
-      false, // not a manager
-      false, // not a creator
-      Date.parse(event.ledgerClosedAt || '') || 0
-    );
+    // Check if member already exists but was removed
+    const memberId = `${communityAddress}-${userAddress.toLowerCase()}`;
+    let existingMember = await CommunityMember.get(memberId);
+    
+    if (existingMember) {
+      // If member exists but was removed, reactivate them
+      if (!existingMember.isMember) {
+        existingMember.isMember = true;
+        existingMember.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
+        await existingMember.save();
+        logger.info(`User ${userAddress} reactivated in community ${communityAddress}`);
+      }
+    } else {
+      // Create new community member
+      await createCommunityMember(
+        communityAddress,
+        userAddress.toLowerCase(),
+        false, // not a manager
+        false, // not a creator
+        Date.parse(event.ledgerClosedAt || '') || 0
+      );
+    }
 
   } catch (e) {
     logger.error(`Failed to process user add event: ${e}`);
@@ -235,12 +249,16 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
     const userScVal = addresses[0]; // The user remove event only has the user
     const userAddress = decodeAddress(userScVal as xdr.ScVal);
     
-    // Remove community member
+    // Find community member
     const memberId = `${communityAddress}-${userAddress.toLowerCase()}`;
     let member = await CommunityMember.get(memberId);
     
     if (member) {
-      await CommunityMember.remove(memberId);
+      // Update member as not active instead of removing
+      member.isMember = false;
+      member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
+      await member.save();
+      logger.info(`User ${userAddress} marked as removed from community ${communityAddress}`);
     } else {
       logger.warn(`User ${userAddress} is not a member of community ${communityAddress}`);
     }
@@ -966,6 +984,7 @@ async function createCommunityMember(
       userAddress: userAddress,
       isManager: isManager,
       isCreator: isCreator,
+      isMember: true,
       communityAddress: communityId,
       lastIndexedAt: BigInt(timestamp),
       points: 0,
