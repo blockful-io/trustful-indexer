@@ -255,8 +255,8 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
     
     if (member) {
       // Update member as not active instead of removing
-      // Note: This only changes membership status, not manager status
       member.isMember = false;
+      member.isManager = false;
       member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
       await member.save();
       logger.info(`User ${userAddress} marked as removed from community ${communityAddress}`);
