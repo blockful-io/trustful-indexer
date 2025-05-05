@@ -255,6 +255,7 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
     
     if (member) {
       // Update member as not active instead of removing
+      // Note: This only changes membership status, not manager status
       member.isMember = false;
       member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
       await member.save();
@@ -307,6 +308,8 @@ export async function handleScorerManagerAdd(event: SorobanEvent): Promise<void>
     
     if (member) {
       member.isManager = true;
+      member.isMember = true; // Ensure the user is also a member when adding as manager
+      member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
       await member.save();
     } else {
       // Create new member with manager role
@@ -358,7 +361,9 @@ export async function handleScorerManagerRemove(event: SorobanEvent): Promise<vo
     
     if (member) {
       member.isManager = false;
+      member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
       await member.save();
+      logger.info(`User ${managerAddress} manager role removed in community ${communityAddress}`);
     }
     
   } catch (e) {
