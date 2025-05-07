@@ -154,14 +154,28 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     // Create user if doesn't exist
     await checkAndGetUser(userAddress);
     
-    // Create community member
-    await createCommunityMember(
-      communityAddress,
-      userAddress.toLowerCase(),
-      false, // not a manager
-      false, // not a creator
-      Date.parse(event.ledgerClosedAt || '') || 0
-    );
+    // Check if member already exists but was removed
+    const memberId = `${communityAddress}-${userAddress.toLowerCase()}`;
+    let existingMember = await CommunityMember.get(memberId);
+    
+    if (existingMember) {
+      // If member exists but was removed, reactivate them
+      if (!existingMember.isMember) {
+        existingMember.isMember = true;
+        existingMember.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
+        await existingMember.save();
+        logger.info(`User ${userAddress} reactivated in community ${communityAddress}`);
+      }
+    } else {
+      // Create new community member
+      await createCommunityMember(
+        communityAddress,
+        userAddress.toLowerCase(),
+        false, // not a manager
+        false, // not a creator
+        Date.parse(event.ledgerClosedAt || '') || 0
+      );
+    }
 
   } catch (e) {
     logger.error(`Failed to process user add event: ${e}`);
@@ -223,24 +237,34 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
       return;
     }
 
-    const addresses = typeof event.value.value === 'function' 
+    // Get the raw value from the event
+    const rawValue = typeof event.value.value === 'function' 
       ? event.value.value() 
       : event.value.value;
-
-    if (!Array.isArray(addresses)) {
-      logger.error(`Invalid addresses format: ${JSON.stringify(addresses)}`);
+    
+    // Process as direct ScAddress object like in UserAdd
+    logger.info(`Processing in direct ScAddress format`);
+    
+    let userAddress: string;
+    try {
+      userAddress = decodeScAddress(rawValue);
+      logger.info(`Successfully decoded user address: ${userAddress}`);
+    } catch (decodeError) {
+      logger.error(`Failed to decode ScAddress: ${decodeError}`);
       return;
     }
     
-    const userScVal = addresses[0]; // The user remove event only has the user
-    const userAddress = decodeAddress(userScVal as xdr.ScVal);
-    
-    // Remove community member
+    // Find community member
     const memberId = `${communityAddress}-${userAddress.toLowerCase()}`;
     let member = await CommunityMember.get(memberId);
     
     if (member) {
-      await CommunityMember.remove(memberId);
+      // Update member as not active instead of removing
+      member.isMember = false;
+      member.isManager = false;
+      member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
+      await member.save();
+      logger.info(`User ${userAddress} marked as removed from community ${communityAddress}`);
     } else {
       logger.warn(`User ${userAddress} is not a member of community ${communityAddress}`);
     }
@@ -289,6 +313,8 @@ export async function handleScorerManagerAdd(event: SorobanEvent): Promise<void>
     
     if (member) {
       member.isManager = true;
+      member.isMember = true; // Ensure the user is also a member when adding as manager
+      member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
       await member.save();
     } else {
       // Create new member with manager role
@@ -340,7 +366,9 @@ export async function handleScorerManagerRemove(event: SorobanEvent): Promise<vo
     
     if (member) {
       member.isManager = false;
+      member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
       await member.save();
+      logger.info(`User ${managerAddress} manager role removed in community ${communityAddress}`);
     }
     
   } catch (e) {
@@ -966,6 +994,7 @@ async function createCommunityMember(
       userAddress: userAddress,
       isManager: isManager,
       isCreator: isCreator,
+      isMember: true,
       communityAddress: communityId,
       lastIndexedAt: BigInt(timestamp),
       points: 0,

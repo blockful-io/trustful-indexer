@@ -12,7 +12,7 @@ runner:
 description: >-
   This project can be use as a starting point for developing your new Stellar
   SubQuery project (mainnet)
-repository: https://github.com/subquery/stellar-subql-starter
+repository: 'https://github.com/subquery/stellar-subql-starter'
 schema:
   file: ./schema.graphql
 network:
