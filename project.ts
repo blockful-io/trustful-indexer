@@ -21,6 +21,7 @@ const mainnetEndpoints = [
   "https://horizon.stellar.org",
   "https://rpc.ankr.com/http/stellar_horizon",
   "https://lb.nodies.app/v1/b07564ed2a8f40fcba62614a34ae1767",
+  "https://rpc.ankr.com/premium-http/stellar_horizon/cdd5efa03c7336ae2512ae8a3dd70d7e3cfae9a37978093c73d507ae7e377050"
 ];
 
 const mode = process.env.NODE_ENV || 'testnet';
