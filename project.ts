@@ -19,7 +19,7 @@ const testnetEndpoints = [
 
 const mainnetEndpoints = [
   "https://horizon.stellar.org",
-  "https://rpc.ankr.com/http/stellar_horizon",
+  "https://autumn-sly-sunset.stellar-mainnet.quiknode.pro/e2f9e649f4af80676cbfd9a10da3f3061cf2ea9f",
   "https://rpc.ankr.com/premium-http/stellar_horizon/cdd5efa03c7336ae2512ae8a3dd70d7e3cfae9a37978093c73d507ae7e377050"
 ];
 
