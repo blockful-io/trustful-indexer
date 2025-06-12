@@ -18,9 +18,12 @@ const testnetEndpoints = [
 ];
 
 const mainnetEndpoints = [
+  // "https://autumn-sly-sunset.stellar-mainnet.quiknode.pro/e2f9e649f4af80676cbfd9a10da3f3061cf2ea9f",
   "https://horizon.stellar.org",
-  "https://autumn-sly-sunset.stellar-mainnet.quiknode.pro/e2f9e649f4af80676cbfd9a10da3f3061cf2ea9f",
-  "https://rpc.ankr.com/premium-http/stellar_horizon/cdd5efa03c7336ae2512ae8a3dd70d7e3cfae9a37978093c73d507ae7e377050"
+  // NOTE: Ankr endpoints have issues with mixed HTTP/HTTPS in responses
+  // This causes NotFoundError with Stellar SDK. Avoid using these until fixed:
+  // "https://rpc.ankr.com/http/stellar_horizon",
+  // "https://rpc.ankr.com/premium-http/stellar_horizon/cdd5efa03c7336ae2512ae8a3dd70d7e3cfae9a37978093c73d507ae7e377050"
 ];
 
 const mode = process.env.NODE_ENV || 'testnet';
