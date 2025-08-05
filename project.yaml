@@ -22,7 +22,7 @@ network:
   sorobanEndpoint: 'https://soroban-rpc.mainnet.stellar.gateway.fm'
 dataSources:
   - kind: stellar/Runtime
-    startBlock: 57421000
+    startBlock: 58333000
     mapping:
       file: ./dist/index.js
       handlers:

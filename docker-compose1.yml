@@ -1,47 +1,25 @@
-version: "3"
-
 services:
-  postgres:
-    image: postgres:14-alpine
-    ports:
-      - 5432:5432
-    volumes:
-      - .data/postgres:/var/lib/postgresql/data
-      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
-    environment:
-      POSTGRES_PASSWORD: postgres
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - subquery
-
   subquery-node:
     image: subquerynetwork/subql-node-stellar:latest
-    depends_on:
-      "postgres":
-        condition: service_healthy
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     environment:
       DB_USER: postgres
-      DB_PASS: postgres
-      DB_DATABASE: postgres
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_PASS: rUoedpmygVqGSBbWOWTlueptlZcjAyqp
+      DB_DATABASE: railway
+      DB_HOST: trolley.proxy.rlwy.net
+      DB_PORT: 50588
     volumes:
       - ./:/app
     command:
       - ${SUB_COMMAND:-} # set SUB_COMMAND env variable to "test" to run tests
       - -f=/app
       - --db-schema=public
-      - --workers=1 # Single worker to avoid rate limits
-      - --batch-size=1 # Process one ledger at a time
-      - --timeout=30000 # Increase timeout to 30 seconds
+      - --workers=5 # Ultra conservative - single worker to avoid rate limits
+      - --batch-size=10 # Process one ledger at a time
       - --unsafe
-      - --query-limit=10 # Limit concurrent queries
-      - --index-delay-time=500 # Add 500ms delay between blocks
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/ready"]
       interval: 10s
