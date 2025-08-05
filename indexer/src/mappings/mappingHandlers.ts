@@ -13,15 +13,15 @@ export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): 
       ? event.value.value() 
       : event.value.value;
     if (!Array.isArray(addresses)) {
-      logger.error('addresses is not an array');
-      logger.error(`addresses type: ${typeof addresses}`);
-      logger.error(`addresses value: ${JSON.stringify(addresses, null, 2)}`);
+      // logger.error('addresses is not an array');
+      // logger.error(`addresses type: ${typeof addresses}`);
+      // logger.error(`addresses value: ${JSON.stringify(addresses, null, 2)}`);
       return;
     }
     if (addresses.length < 4) {
-      logger.error('addresses array does not have enough elements');
-      logger.error(`addresses length: ${addresses.length}`);
-      logger.error(`addresses: ${JSON.stringify(addresses, null, 2)}`);
+      // logger.error('addresses array does not have enough elements');
+      // logger.error(`addresses length: ${addresses.length}`);
+      // logger.error(`addresses: ${JSON.stringify(addresses, null, 2)}`);
       return;
     }
     
@@ -48,7 +48,7 @@ export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): 
     if (community) {
       // Community already exists, update with factory address
       if (!community.factoryAddress && factoryAddress) {
-        logger.info(`Updating existing community ${communityAddress} with factory address ${factoryAddress}`);
+        // logger.info(`Updating existing community ${communityAddress} with factory address ${factoryAddress}`);
         community.factoryAddress = factoryAddress;
         community.lastIndexedAt = BigInt(Date.now());
         await community.save();
@@ -81,8 +81,8 @@ export async function handlerScorerFactoryCreateCommunity(event: SorobanEvent): 
     }
 
   } catch (e) {
-    logger.error(`Failed to process community creation event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process community creation event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
 }
@@ -95,7 +95,7 @@ export async function handlerScorerFactoryRemoveCommunity(event: SorobanEvent): 
       : event.value.value;
     
     if (!Array.isArray(addresses) || addresses.length < 2) {
-      logger.error(`Invalid addresses format: ${JSON.stringify(addresses)}`);
+      // logger.error(`Invalid addresses format: ${JSON.stringify(addresses)}`);
       return;
     }
     
@@ -111,22 +111,22 @@ export async function handlerScorerFactoryRemoveCommunity(event: SorobanEvent): 
       await community.save();
     }
   } catch (e) {
-    logger.error(`Failed to process community removal event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process community removal event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
 }
 
 export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
   if (!event.ledger) throw new Error('Event ledger is null');
-  logger.info(
+  // logger.info(
     `New user add event found at block ${event.ledger.sequence.toString()}`
   );
   
   try {
     const scorerAddress = event.contractId?.contractId().toString() ?? '';
     const communityAddress = scorerAddress.toLowerCase();
-    logger.info(`Scorer address: ${scorerAddress}`);
+    // logger.info(`Scorer address: ${scorerAddress}`);
     
     // Get community
     const community = await getValidCommunity(communityAddress, 'UserAdd');
@@ -140,14 +140,14 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
       : event.value.value;
     
     // Process as direct ScAddress object
-    logger.info(`Processing in direct ScAddress format`);
+    // logger.info(`Processing in direct ScAddress format`);
     
     let userAddress: string;
     try {
       userAddress = decodeScAddress(rawValue);
-      logger.info(`Successfully decoded user address: ${userAddress}`);
+      // logger.info(`Successfully decoded user address: ${userAddress}`);
     } catch (decodeError) {
-      logger.error(`Failed to decode ScAddress: ${decodeError}`);
+      // logger.error(`Failed to decode ScAddress: ${decodeError}`);
       return;
     }
     
@@ -164,7 +164,7 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
         existingMember.isMember = true;
         existingMember.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
         await existingMember.save();
-        logger.info(`User ${userAddress} reactivated in community ${communityAddress}`);
+        // logger.info(`User ${userAddress} reactivated in community ${communityAddress}`);
       }
     } else {
       // Create new community member
@@ -178,8 +178,8 @@ export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
     }
 
   } catch (e) {
-    logger.error(`Failed to process user add event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process user add event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
   }
 }
 
@@ -217,14 +217,14 @@ function decodeScAddress(scAddressObj: any): string {
     
     throw new Error(`Unexpected ScAddress format: ${JSON.stringify(scAddressObj, null, 2)}`);
   } catch (e) {
-    logger.error(`Failed to decode ScAddress: ${e}`);
+    // logger.error(`Failed to decode ScAddress: ${e}`);
     throw e;
   }
 }
 
 export async function handleScorerUserRemove(event: SorobanEvent): Promise<void> {
   if (!event.ledger) throw new Error('Event ledger is null');
-  logger.info(
+  // logger.info(
     `User remove event found at block ${event.ledger.sequence.toString()}`
   );
   try {
@@ -243,14 +243,14 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
       : event.value.value;
     
     // Process as direct ScAddress object like in UserAdd
-    logger.info(`Processing in direct ScAddress format`);
+    // logger.info(`Processing in direct ScAddress format`);
     
     let userAddress: string;
     try {
       userAddress = decodeScAddress(rawValue);
-      logger.info(`Successfully decoded user address: ${userAddress}`);
+      // logger.info(`Successfully decoded user address: ${userAddress}`);
     } catch (decodeError) {
-      logger.error(`Failed to decode ScAddress: ${decodeError}`);
+      // logger.error(`Failed to decode ScAddress: ${decodeError}`);
       return;
     }
     
@@ -264,14 +264,14 @@ export async function handleScorerUserRemove(event: SorobanEvent): Promise<void>
       member.isManager = false;
       member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
       await member.save();
-      logger.info(`User ${userAddress} marked as removed from community ${communityAddress}`);
+      // logger.info(`User ${userAddress} marked as removed from community ${communityAddress}`);
     } else {
-      logger.warn(`User ${userAddress} is not a member of community ${communityAddress}`);
+      // logger.warn(`User ${userAddress} is not a member of community ${communityAddress}`);
     }
 
   } catch (e) {
-    logger.error(`Failed to process user remove event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process user remove event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
 }
@@ -294,7 +294,7 @@ export async function handleScorerManagerAdd(event: SorobanEvent): Promise<void>
       : event.value.value;
 
     if (!Array.isArray(addresses) || addresses.length < 2) {
-      logger.error(`Invalid addresses format: ${JSON.stringify(addresses)}`);
+      // logger.error(`Invalid addresses format: ${JSON.stringify(addresses)}`);
       return;
     }
     
@@ -328,8 +328,8 @@ export async function handleScorerManagerAdd(event: SorobanEvent): Promise<void>
     }
     
   } catch (e) {
-    logger.error(`Failed to process manager add event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process manager add event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
 }
@@ -351,7 +351,7 @@ export async function handleScorerManagerRemove(event: SorobanEvent): Promise<vo
       : event.value.value;
 
     if (!Array.isArray(addresses) || addresses.length < 2) {
-      logger.error(`Invalid addresses format: ${JSON.stringify(addresses)}`);
+      // logger.error(`Invalid addresses format: ${JSON.stringify(addresses)}`);
       return;
     }
     
@@ -368,12 +368,12 @@ export async function handleScorerManagerRemove(event: SorobanEvent): Promise<vo
       member.isManager = false;
       member.lastIndexedAt = BigInt(Date.parse(event.ledgerClosedAt || '') || Date.now());
       await member.save();
-      logger.info(`User ${managerAddress} manager role removed in community ${communityAddress}`);
+      // logger.info(`User ${managerAddress} manager role removed in community ${communityAddress}`);
     }
     
   } catch (e) {
-    logger.error(`Failed to process manager remove event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process manager remove event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
 }
@@ -387,12 +387,12 @@ export async function handleScorerInit(event: SorobanEvent): Promise<void> {
   try {
     const scorerAddress = event.contractId?.contractId().toString() ?? '';
     const communityAddress = scorerAddress.toLowerCase();
-    logger.info(`Processing init event for community ${communityAddress}`);
+    // logger.info(`Processing init event for community ${communityAddress}`);
     
     // Parse event values
     const values = extractEventValues(event);
     if (!values || values.length < 6) {
-      logger.error(`Invalid values format for init event`);
+      // logger.error(`Invalid values format for init event`);
       return;
     }
     
@@ -445,7 +445,7 @@ export async function handleScorerInit(event: SorobanEvent): Promise<void> {
       if (needsUpdate) {
         community.lastIndexedAt = BigInt(Date.now());
         await community.save();
-        logger.info(`Updated existing community ${communityAddress} with data from init event`);
+        // logger.info(`Updated existing community ${communityAddress} with data from init event`);
       }
       
       // Always process managers and badges as they might be updated
@@ -453,8 +453,8 @@ export async function handleScorerInit(event: SorobanEvent): Promise<void> {
       await processBadges(values[2], community, creatorAddress, event.ledgerClosedAt);
     }
   } catch (e) {
-    logger.error(`Failed to process init event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process init event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
 }
@@ -479,7 +479,7 @@ function extractEventValues(event: SorobanEvent): any[] | null {
  */
 function extractCreatorAddress(creatorScVal: any): string {
   const creatorAddress = decodeAddress(creatorScVal as xdr.ScVal);
-  logger.info(`Creator address: ${creatorAddress}`);
+  // logger.info(`Creator address: ${creatorAddress}`);
   return creatorAddress;
 }
 
@@ -565,12 +565,12 @@ async function processManagers(
     if (!rawManagersObj || 
         rawManagersObj._switch?.name !== 'scvVec' || 
         !Array.isArray(rawManagersObj._value)) {
-      logger.warn("Managers value is not a valid vector");
+      // logger.warn("Managers value is not a valid vector");
       return;
     }
     
     const managerAddresses = rawManagersObj._value;
-    logger.info(`Processing ${managerAddresses.length} managers from vector`);
+    // logger.info(`Processing ${managerAddresses.length} managers from vector`);
     
     let successCount = 0;
     for (let i = 0; i < managerAddresses.length; i++) {
@@ -581,7 +581,7 @@ async function processManagers(
         }
         
         const managerAddress = decodeScValAddress(addrItem);
-        logger.info(`Manager ${i}: ${managerAddress}`);
+        // logger.info(`Manager ${i}: ${managerAddress}`);
         
         // Skip creator as they're already added
         if (managerAddress.toLowerCase() === creatorAddress.toLowerCase()) {
@@ -600,13 +600,13 @@ async function processManagers(
         
         successCount++;
       } catch (addrError) {
-        logger.error(`Failed to process manager address ${i}: ${addrError}`);
+        // logger.error(`Failed to process manager address ${i}: ${addrError}`);
       }
     }
     
-    logger.info(`Successfully added ${successCount} additional managers`);
+    // logger.info(`Successfully added ${successCount} additional managers`);
   } catch (e) {
-    logger.error(`Failed to process managers: ${e}`);
+    // logger.error(`Failed to process managers: ${e}`);
   }
 }
 
@@ -631,14 +631,14 @@ async function processBadges(
       await processBadgesVector(rawBadgesObj._value, community, creatorAddress, ledgerClosedAt);
     }
     else {
-      logger.warn(`Badges data in unexpected format: ${rawBadgesObj?._switch?.name}`);
+      // logger.warn(`Badges data in unexpected format: ${rawBadgesObj?._switch?.name}`);
     }
     
     // Update community with processed badges
     community.lastIndexedAt = BigInt(Date.now());
     await community.save();
   } catch (e) {
-    logger.error(`Failed to process badges: ${e}`);
+    // logger.error(`Failed to process badges: ${e}`);
   }
 }
 
@@ -650,7 +650,7 @@ async function processBadgesMap(
   community: Community,
   ledgerClosedAt?: string
 ): Promise<void> {
-  logger.info(`Processing ${badgeEntries.length} badges from map structure`);
+  // logger.info(`Processing ${badgeEntries.length} badges from map structure`);
   
   let successCount = 0;
   for (let i = 0; i < badgeEntries.length; i++) {
@@ -667,11 +667,11 @@ async function processBadgesMap(
         successCount++;
       }
     } catch (entryError) {
-      logger.error(`Failed to process badge entry ${i}: ${entryError}`);
+      // logger.error(`Failed to process badge entry ${i}: ${entryError}`);
     }
   }
   
-  logger.info(`Successfully created ${successCount} badges out of ${badgeEntries.length}`);
+  // logger.info(`Successfully created ${successCount} badges out of ${badgeEntries.length}`);
 }
 
 /**
@@ -719,7 +719,7 @@ async function extractAndCreateBadge(
     score = Number(valObj._value || 1);
   }
   
-  logger.info(`Badge ${index}: ${badgeName} (issuer: ${issuerAddress}, score: ${score})`);
+  // logger.info(`Badge ${index}: ${badgeName} (issuer: ${issuerAddress}, score: ${score})`);
   
   // Create badge record if it doesn't exist
   const badgeId = `${issuerAddress.toLowerCase()}-${communityAddress}-${badgeName}`;
@@ -754,7 +754,7 @@ async function processBadgesVector(
   creatorAddress: string,
   ledgerClosedAt?: string
 ): Promise<void> {
-  logger.info(`Processing ${addresses.length} badge addresses from vector format`);
+  // logger.info(`Processing ${addresses.length} badge addresses from vector format`);
   
   let successCount = 0;
   for (let i = 0; i < addresses.length; i++) {
@@ -790,11 +790,11 @@ async function processBadgesVector(
         successCount++;
       }
     } catch (addrError) {
-      logger.error(`Failed to process badge address ${i}: ${addrError}`);
+      // logger.error(`Failed to process badge address ${i}: ${addrError}`);
     }
   }
   
-  logger.info(`Successfully created ${successCount} badges from vector format`);
+  // logger.info(`Successfully created ${successCount} badges from vector format`);
 }
 
 // Helper function to decode an address directly from a ScVal object
@@ -830,7 +830,7 @@ function decodeScValAddress(scValObj: any): string {
     
     throw new Error(`Unexpected address format: ${JSON.stringify(scValObj, null, 2)}`);
   } catch (e) {
-    logger.error(`Failed to decode ScVal address: ${e}`);
+    // logger.error(`Failed to decode ScVal address: ${e}`);
     throw e;
   }
 }
@@ -852,7 +852,7 @@ export async function handleScorerBadgeAdd(event: SorobanEvent): Promise<void> {
       : event.value.value;
 
     if (!Array.isArray(data) || data.length < 3) {
-      logger.error(`Invalid data format: ${JSON.stringify(data)}`);
+      // logger.error(`Invalid data format: ${JSON.stringify(data)}`);
       return;
     }
     
@@ -863,7 +863,7 @@ export async function handleScorerBadgeAdd(event: SorobanEvent): Promise<void> {
     // Badge ID contains name and issuer
     const badgeData = decodeObjectFromScVal(badgeIdScVal as xdr.ScVal);
     if (!badgeData || !badgeData.name || !badgeData.issuer) {
-      logger.error(`Invalid badge data: ${JSON.stringify(badgeData)}`);
+      // logger.error(`Invalid badge data: ${JSON.stringify(badgeData)}`);
       return;
     }
     
@@ -898,8 +898,8 @@ export async function handleScorerBadgeAdd(event: SorobanEvent): Promise<void> {
     }
     
   } catch (e) {
-    logger.error(`Failed to process badge add event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process badge add event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
 }
@@ -921,7 +921,7 @@ export async function handleScorerBadgeRemove(event: SorobanEvent): Promise<void
       : event.value.value;
 
     if (!Array.isArray(data) || data.length < 3) {
-      logger.error(`Invalid data format: ${JSON.stringify(data)}`);
+      // logger.error(`Invalid data format: ${JSON.stringify(data)}`);
       return;
     }
     
@@ -932,7 +932,7 @@ export async function handleScorerBadgeRemove(event: SorobanEvent): Promise<void
     // Badge ID contains name and issuer
     const badgeData = decodeObjectFromScVal(badgeIdScVal as xdr.ScVal);
     if (!badgeData || !badgeData.name || !badgeData.issuer) {
-      logger.error(`Invalid badge data: ${JSON.stringify(badgeData)}`);
+      // logger.error(`Invalid badge data: ${JSON.stringify(badgeData)}`);
       return;
     }
     
@@ -956,8 +956,8 @@ export async function handleScorerBadgeRemove(event: SorobanEvent): Promise<void
     }
     
   } catch (e) {
-    logger.error(`Failed to process badge remove event: ${e}`);
-    logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
+    // logger.error(`Failed to process badge remove event: ${e}`);
+    // logger.error(`Full event data: ${JSON.stringify(event, null, 2)}`);
     throw e;
   }
 }
@@ -1041,7 +1041,7 @@ function decodeAddress(scVal: xdr.ScVal): string {
       }
       
       // If all attempts fail, log the error and throw a clear exception
-      logger.error(`Failed to decode address, raw value: ${JSON.stringify(scVal)}`);
+      // logger.error(`Failed to decode address, raw value: ${JSON.stringify(scVal)}`);
       throw new Error(`Cannot decode address from ScVal: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
@@ -1053,12 +1053,12 @@ function decodeString(scVal: xdr.ScVal): string {
       return scVal.str().toString();
     } else {
       const type = scVal && scVal.switch ? scVal.switch().name : typeof scVal;
-      logger.error(`Expected string ScVal but got ${type}`);
-      logger.error(`Value: ${JSON.stringify(scVal)}`);
+      // logger.error(`Expected string ScVal but got ${type}`);
+      // logger.error(`Value: ${JSON.stringify(scVal)}`);
       return '';
     }
   } catch (e) {
-    logger.error(`Failed to decode string from ScVal: ${e}`);
+    // logger.error(`Failed to decode string from ScVal: ${e}`);
     return '';
   }
 }
@@ -1068,11 +1068,11 @@ function decodeU32FromScVal(scVal: xdr.ScVal): number {
     if (scVal.switch().name === 'scvU32') {
       return scVal.u32();
     } else {
-      logger.error(`Expected u32 ScVal but got ${scVal.switch().name}`);
+      // logger.error(`Expected u32 ScVal but got ${scVal.switch().name}`);
       return 0;
     }
   } catch (e) {
-    logger.error(`Failed to decode u32 from ScVal: ${e}`);
+    // logger.error(`Failed to decode u32 from ScVal: ${e}`);
     return 0;
   }
 }
@@ -1082,7 +1082,7 @@ function decodeObjectFromScVal(scVal: xdr.ScVal): any {
     if (scVal.switch().name === 'scvMap') {
       const mapValue = scVal.map();
       if (!mapValue) {
-        logger.error('Map value is null');
+        // logger.error('Map value is null');
         return null;
       }
       
@@ -1101,7 +1101,7 @@ function decodeObjectFromScVal(scVal: xdr.ScVal): any {
         }
         
         // Debug log
-        logger.info(`Decoding map entry ${i}: key=${keyName}, valueType=${value.switch().name}`);
+        // logger.info(`Decoding map entry ${i}: key=${keyName}, valueType=${value.switch().name}`);
         
         // Decode value based on type
         if (value.switch().name === 'scvString') {
@@ -1116,7 +1116,7 @@ function decodeObjectFromScVal(scVal: xdr.ScVal): any {
         } else {
           // For other types, store type name for debugging
           result[keyName] = `[${value.switch().name}]`;
-          logger.info(`Unhandled value type ${value.switch().name} for key ${keyName}`);
+          // logger.info(`Unhandled value type ${value.switch().name} for key ${keyName}`);
         }
       }
       
@@ -1125,7 +1125,7 @@ function decodeObjectFromScVal(scVal: xdr.ScVal): any {
     
     return null;
   } catch (e) {
-    logger.error(`Failed to decode object from ScVal: ${e}`);
+    // logger.error(`Failed to decode object from ScVal: ${e}`);
     return null;
   }
 }
@@ -1137,7 +1137,7 @@ function decodeObjectFromScVal(scVal: xdr.ScVal): any {
 async function getValidCommunity(communityAddress: string, handlerName: string): Promise<Community | null> {
   const community = await Community.get(communityAddress);
   if (!community) {
-    logger.warn(`[${handlerName}] Community not found for address: ${communityAddress}`);
+    // logger.warn(`[${handlerName}] Community not found for address: ${communityAddress}`);
     return null;
   }
   return community;

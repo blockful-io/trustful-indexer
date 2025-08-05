@@ -1,0 +1,23 @@
+{
+  "name": "horizon-proxy",
+  "version": "1.0.0",
+  "description": "Proxy to fix Stellar Horizon API pagination bug",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "curl -s http://localhost:8080/health"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
