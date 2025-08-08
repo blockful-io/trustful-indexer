@@ -119,7 +119,7 @@ export async function handlerScorerFactoryRemoveCommunity(event: SorobanEvent): 
 
 export async function handleScorerUserAdd(event: SorobanEvent): Promise<void> {
   if (!event.ledger) throw new Error('Event ledger is null');
-  // logger.info(
+   logger.info(
     `New user add event found at block ${event.ledger.sequence.toString()}`
   );
   
@@ -224,7 +224,7 @@ function decodeScAddress(scAddressObj: any): string {
 
 export async function handleScorerUserRemove(event: SorobanEvent): Promise<void> {
   if (!event.ledger) throw new Error('Event ledger is null');
-  // logger.info(
+  logger.info(
     `User remove event found at block ${event.ledger.sequence.toString()}`
   );
   try {
