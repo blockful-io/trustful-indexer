@@ -7,9 +7,8 @@ USER root
 # Instalar Node.js para poder aplicar o patch
 RUN apk add --no-cache nodejs npm
 
-# Copiar os patches
-COPY fix-soroban-bug.js /fix.js
-# COPY fix-pagination.js /fix-pagination.js
+# Copiar o patch
+COPY patches/fix-soroban-bug.js /fix.js
 
 # Criar um wrapper script que aplica o patch
 RUN echo '#!/bin/sh' > /entrypoint-patched.sh && \
