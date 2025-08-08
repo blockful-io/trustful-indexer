@@ -6,6 +6,7 @@ console.log('[SOROBAN-PATCH] 🚀 Iniciando patch do SubQuery Stellar...');
 // Rastrear último ledger válido
 let lastValidLedger = null;
 let requestCount = 0;
+let lastLoggedLedger = null; // Para evitar logs repetidos do mesmo ledger
 
 // Hook no módulo HTTP/HTTPS para interceptar requisições
 const Module = require('module');
@@ -19,31 +20,16 @@ Module._load = function(request, parent) {
     const originalRequest = exports.request;
     
     exports.request = function(...args) {
-      // DEBUG: Log headers da requisição
-      if (args[0] && args[0].headers) {
-        console.log(`[SOROBAN-PATCH-DEBUG] Request headers Content-Length: ${args[0].headers['content-length'] || args[0].headers['Content-Length'] || 'not set'}`);
-      }
-      
       const req = originalRequest.apply(this, args);
       const originalWrite = req.write;
       const originalEnd = req.end;
       const originalSetHeader = req.setHeader;
       
-      // Interceptar setHeader para capturar Content-Length
-      req.setHeader = function(name, value) {
-        if (name.toLowerCase() === 'content-length') {
-          console.log(`[SOROBAN-PATCH-DEBUG] setHeader Content-Length: ${value}`);
-        }
-        return originalSetHeader.call(this, name, value);
-      };
-      
       let requestStartLedger = null;
       
       req.write = function(data) {
         try {
-          // DEBUG: Log tamanho original
           const originalLength = data.length;
-          console.log(`[SOROBAN-PATCH-DEBUG] Original data length: ${originalLength} bytes`);
           
           // Verificar se é uma requisição JSON-RPC
           const body = JSON.parse(data.toString());
@@ -59,32 +45,31 @@ Module._load = function(request, parent) {
             let modified = false;
             if (originalLimit && originalLimit < 2000) {
               body.params.pagination.limit = 2000;
-              console.log(`[SOROBAN-PATCH] 🚀 Aumentando limit de ${originalLimit} para 2000`);
               modified = true;
             }
             
-            console.log(`[SOROBAN-PATCH] Request #${requestCount} - startLedger: ${body.params.startLedger}, cursor: ${body.params.cursor ? 'presente' : 'ausente'}, limit: ${body.params.pagination?.limit || 'N/A'}`);
+            // Log apenas quando processar um novo ledger
+            if (hasStartLedger && body.params.startLedger !== lastLoggedLedger) {
+              console.log(`[SOROBAN-PATCH] 📊 Processando ledger: ${body.params.startLedger}`);
+              lastLoggedLedger = body.params.startLedger;
+            }
             
             // CORREÇÃO DO BUG!
             if (!hasStartLedger && !hasCursor) {
-              console.error('[SOROBAN-PATCH] ❌ BUG DETECTADO! Nem startLedger nem cursor presentes!');
+              console.error('[SOROBAN-PATCH] ❌ BUG DETECTADO! Corrigindo startLedger undefined...');
               
               // Sempre corrigir quando detectado
               const ledgerToUse = lastValidLedger || 58254000;
               body.params.startLedger = ledgerToUse;
-              console.log(`[SOROBAN-PATCH] ✅ Corrigido para startLedger: ${ledgerToUse}`);
               data = Buffer.from(JSON.stringify(body));
             } else if (hasCursor && hasStartLedger) {
               // BUG: Soroban não aceita cursor E startLedger juntos!
-              console.error('[SOROBAN-PATCH] ⚠️  BUG: cursor e startLedger juntos! Removendo startLedger...');
               delete body.params.startLedger;
-              console.log(`[SOROBAN-PATCH] ✅ Removido startLedger, mantendo apenas cursor: ${body.params.cursor.substring(0, 20)}...`);
               data = Buffer.from(JSON.stringify(body));
             } else if (hasStartLedger) {
               // Salvar ledger válido
               lastValidLedger = body.params.startLedger;
               requestStartLedger = body.params.startLedger; // Salvar para filtrar resposta
-              console.log(`[SOROBAN-PATCH] 📝 Salvando ledger válido: ${lastValidLedger}`);
             }
             
             // Se modificamos algo, atualizar o data
@@ -92,19 +77,9 @@ Module._load = function(request, parent) {
               const newData = JSON.stringify(body);
               const newBuffer = Buffer.from(newData);
               
-              // DEBUG: Comparar tamanhos
-              console.log(`[SOROBAN-PATCH-DEBUG] Original length: ${originalLength}, New length: ${newBuffer.length}`);
-              console.log(`[SOROBAN-PATCH-DEBUG] Length difference: ${newBuffer.length - originalLength} bytes`);
-              
               // CRÍTICO: Atualizar Content-Length se mudou o tamanho
               if (newBuffer.length !== originalLength) {
-                console.log(`[SOROBAN-PATCH-DEBUG] Updating Content-Length from ${originalLength} to ${newBuffer.length}`);
                 req.setHeader('Content-Length', newBuffer.length.toString());
-              }
-              
-              // DEBUG: Log do que está sendo enviado quando limit >= 1000
-              if (body.params.pagination && body.params.pagination.limit >= 1000) {
-                console.log(`[SOROBAN-PATCH-DEBUG] Limit 1000+ payload: ${newData.substring(0, 200)}`);
               }
               
               data = newBuffer;
@@ -119,6 +94,9 @@ Module._load = function(request, parent) {
       
       // Interceptar resposta e filtrar eventos
       req.on('response', (res) => {
+        // Aumentar limite de listeners para evitar warnings com múltiplas requisições simultâneas
+        res.setMaxListeners(50);
+        
         let responseData = '';
         const chunks = [];
         
@@ -129,16 +107,6 @@ Module._load = function(request, parent) {
         res.on('end', () => {
           try {
             responseData = Buffer.concat(chunks).toString();
-            
-            // DEBUG: Log tamanho da resposta
-            if (requestStartLedger) {
-              console.log(`[SOROBAN-PATCH-DEBUG] Response size: ${responseData.length} bytes, chunks: ${chunks.length}`);
-              
-              // Se resposta muito pequena, provavelmente é erro
-              if (responseData.length < 200) {
-                console.log(`[SOROBAN-PATCH-DEBUG] Small response content: ${responseData}`);
-              }
-            }
             
             const response = JSON.parse(responseData);
             
@@ -156,7 +124,11 @@ Module._load = function(request, parent) {
                 response.result.cursor = null; // Remover cursor já que filtramos
                 
                 const modifiedResponse = JSON.stringify(response);
-                console.log(`[SOROBAN-PATCH] 🎯 Filtrado: ${originalCount} → ${filteredEvents.length} eventos (apenas ledger ${requestStartLedger})`);
+                
+                // Log apenas quando realmente filtrar eventos
+                if (filteredEvents.length > 0) {
+                  console.log(`[SOROBAN-PATCH] ✅ Filtrado: ${originalCount} → ${filteredEvents.length} eventos`);
+                }
                 
                 // Substituir o response data
                 res.removeAllListeners('data');
@@ -170,8 +142,6 @@ Module._load = function(request, parent) {
                 
                 return;
               }
-              
-              console.log(`[SOROBAN-PATCH] 📥 Resposta: ${originalCount} eventos, cursor: ${response.result.cursor ? 'presente' : 'ausente'}`);
             }
           } catch (e) {
             // Não é JSON ou não é resposta de eventos
@@ -191,20 +161,6 @@ Module._load = function(request, parent) {
   }
   
   return exports;
-};
-
-// Interceptar console.error para detectar o erro
-const originalConsoleError = console.error;
-console.error = function(...args) {
-  const message = args.join(' ');
-  
-  if (message.includes('startLedger must be positive')) {
-    console.warn('[SOROBAN-PATCH] ⚠️  ERRO DETECTADO! "startLedger must be positive"');
-    console.warn('[SOROBAN-PATCH] ⚠️  Último ledger válido: ' + lastValidLedger);
-    console.warn('[SOROBAN-PATCH] ⚠️  O patch deveria ter prevenido isso!');
-  }
-  
-  return originalConsoleError.apply(console, args);
 };
 
 console.log('[SOROBAN-PATCH] ✅ Patch aplicado com sucesso!');
