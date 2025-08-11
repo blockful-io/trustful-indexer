@@ -650,7 +650,7 @@ async function processBadgesMap(
   community: Community,
   ledgerClosedAt?: string
 ): Promise<void> {
-  // logger.info(`Processing ${badgeEntries.length} badges from map structure`);
+  logger.info(`Processing ${badgeEntries.length} badges from map structure`);
   
   let successCount = 0;
   for (let i = 0; i < badgeEntries.length; i++) {
@@ -671,11 +671,12 @@ async function processBadgesMap(
     }
   }
   
-  // logger.info(`Successfully created ${successCount} badges out of ${badgeEntries.length}`);
+  logger.info(`Successfully created ${successCount} badges out of ${badgeEntries.length}`);
 }
 
 /**
  * Extracts badge data from entry and creates badge record
+ * Supports both Vec format [name, address] (legacy) and Map format {issuer: address, name: string} (new)
  */
 async function extractAndCreateBadge(
   entry: any,
@@ -690,26 +691,77 @@ async function extractAndCreateBadge(
   const keyObj = entry._attributes.key;
   const valObj = entry._attributes.val;
   
-  if (!keyObj || !valObj || keyObj._switch?.name !== 'scvVec' || 
-      !Array.isArray(keyObj._value) || keyObj._value.length < 2) {
+  if (!keyObj || !valObj) {
     return null;
   }
   
-  // Extract badge name and address
-  const nameScVal = keyObj._value[0];
-  const addressScVal = keyObj._value[1];
+  let badgeName: string;
+  let issuerAddress: string;
   
-  if (nameScVal._switch?.name !== 'scvString' || !addressScVal || addressScVal._switch?.name !== 'scvAddress') {
-    return null;
+  // Handle BadgeId as Map (struct) format {issuer: address, name: string} - NEW FORMAT
+  if (keyObj._switch?.name === 'scvMap' && Array.isArray(keyObj._value)) {
+    logger.info(`Processing badge ${index} as Map format (new)`);
+    
+    // Extract from Map structure
+    const mapEntries = keyObj._value;
+    let issuerEntry, nameEntry;
+    
+    for (const mapEntry of mapEntries) {
+      const key = mapEntry._attributes?.key;
+      const val = mapEntry._attributes?.val;
+      
+      if (key?._switch?.name === 'scvSymbol') {
+        const symbol = key._value?.toString() || '';
+        if (symbol === 'issuer') {
+          issuerEntry = val;
+        } else if (symbol === 'name') {
+          nameEntry = val;
+        }
+      }
+    }
+    
+    if (!issuerEntry || !nameEntry) {
+      logger.error(`Badge ${index}: Missing issuer or name in Map structure`);
+      return null;
+    }
+    
+    // Extract name
+    if (nameEntry._switch?.name !== 'scvString') {
+      logger.error(`Badge ${index}: Name is not a string in Map structure`);
+      return null;
+    }
+    badgeName = nameEntry.str().toString();
+    
+    // Extract issuer address
+    try {
+      issuerAddress = decodeScValAddress(issuerEntry);
+    } catch (addrErr) {
+      logger.error(`Badge ${index}: Failed to decode issuer address from Map: ${addrErr}`);
+      return null;
+    }
   }
-  
-  let badgeName = nameScVal.str().toString();
-  
-  // Extract issuer address
-  let issuerAddress;
-  try {
-    issuerAddress = decodeScValAddress(addressScVal);
-  } catch (addrErr) {
+  // Handle BadgeId as Vec format [name, address] - LEGACY FORMAT
+  else if (keyObj._switch?.name === 'scvVec' && Array.isArray(keyObj._value) && keyObj._value.length >= 2) {
+    logger.info(`Processing badge ${index} as Vec format (legacy)`);
+    
+    const nameScVal = keyObj._value[0];
+    const addressScVal = keyObj._value[1];
+    
+    if (nameScVal._switch?.name !== 'scvString' || !addressScVal || addressScVal._switch?.name !== 'scvAddress') {
+      logger.error(`Badge ${index}: Invalid Vec format structure`);
+      return null;
+    }
+    
+    badgeName = nameScVal.str().toString();
+    
+    try {
+      issuerAddress = decodeScValAddress(addressScVal);
+    } catch (addrErr) {
+      logger.error(`Badge ${index}: Failed to decode issuer address from Vec: ${addrErr}`);
+      return null;
+    }
+  } else {
+    logger.error(`Badge ${index}: Unknown BadgeId format: ${keyObj._switch?.name}`);
     return null;
   }
   
@@ -719,7 +771,7 @@ async function extractAndCreateBadge(
     score = Number(valObj._value || 1);
   }
   
-  // logger.info(`Badge ${index}: ${badgeName} (issuer: ${issuerAddress}, score: ${score})`);
+  logger.info(`Badge ${index}: ${badgeName} (issuer: ${issuerAddress}, score: ${score}`);
   
   // Create badge record if it doesn't exist
   const badgeId = `${issuerAddress.toLowerCase()}-${communityAddress}-${badgeName}`;

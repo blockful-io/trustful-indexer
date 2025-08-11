@@ -1,0 +1,41 @@
+# Railway ignore file - não enviar esses arquivos/pastas para o Railway
+
+# Dependências (serão instaladas no container)
+node_modules/
+
+# Build local (será feito no container)
+dist/
+
+# Dados locais
+.data/
+
+# Arquivos de teste criados durante investigação
+test-*.js
+
+# Docker local
+docker/
+
+# Configurações locais (IMPORTANTE: não enviar o .env local!)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# MacOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Cache
+.eslintcache
+
+# Git
+.git/
+.gitignore
+
+# Docs locais que não são necessários para o build
+COMMANDS.md
