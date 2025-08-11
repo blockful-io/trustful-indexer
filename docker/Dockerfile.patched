@@ -1,0 +1,19 @@
+# Dockerfile com patch para o bug do SubQuery
+FROM subquerynetwork/subql-node-stellar:latest
+
+# Mudar para root temporariamente para instalar
+USER root
+
+# Instalar Node.js para poder aplicar o patch
+RUN apk add --no-cache nodejs npm
+
+# Copiar o patch
+COPY patches/fix-soroban-bug.js /fix.js
+
+# Criar um wrapper script que aplica o patch
+RUN echo '#!/bin/sh' > /entrypoint-patched.sh && \
+    echo 'node -r /fix.js /usr/local/lib/node_modules/@subql/node-stellar/bin/run "$@"' >> /entrypoint-patched.sh && \
+    chmod +x /entrypoint-patched.sh
+
+# Usar o wrapper como entrypoint
+ENTRYPOINT ["/entrypoint-patched.sh"]

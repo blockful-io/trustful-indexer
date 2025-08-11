@@ -1,0 +1,92 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    container_name: trustful-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trustful
+
+  # SubQuery Indexer
+  subquery-node:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.patched
+    container_name: trustful-indexer
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database config
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_DATABASE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      # Horizon endpoint (not used for Soroban events)
+      ENDPOINT: ${ENDPOINT:-https://horizon.stellar.org}
+      # Other configs from .env
+      NODE_ENV: ${NODE_ENV:-mainnet}
+      START_BLOCK: ${START_BLOCK:-58252120}
+      CHAIN_ID: "${CHAIN_ID:-Public Global Stellar Network ; September 2015}"
+      SCORER_FACTORY_CONTRACT_ID: ${SCORER_FACTORY_CONTRACT_ID:-CBVQVSWZWDTIPJ46A6U7KIHTEP7PHRL5ZG5LNRKHO5OAV2CHNXVY5D2R}
+      SOROBAN_ENDPOINT: ${SOROBAN_ENDPOINT:-https://soroban-rpc.mainnet.stellar.gateway.fm}
+    volumes:
+      - ../:/app
+      - ../patches/fix-soroban-bug.js:/fix.js
+    command:
+      - -f=/app
+      - --db-schema=public
+      - --workers=1
+      - --batch-size=1
+      - --timeout=120000
+      - --unsafe
+    networks:
+      - trustful
+    restart: on-failure:10
+
+  # Optional: GraphQL Query Service
+  graphql-engine:
+    image: subquerynetwork/subql-query:latest
+    container_name: trustful-graphql
+    profiles: ["full"] # Only starts with --profile full
+    ports:
+      - "3000:3000"
+    depends_on:
+      - subquery-node
+    restart: on-failure:10
+    environment:
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_DATABASE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+    command:
+      - --name=app
+      - --playground
+      - --indexer=http://subquery-node:3000
+      - --cors=*
+    networks:
+      - trustful
+
+networks:
+  trustful:
+    driver: bridge
+
+volumes:
+  postgres_data:

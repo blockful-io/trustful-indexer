@@ -24,9 +24,9 @@ type Community @entity {
 type CommunityMember @entity {
   id: ID!
   userAddress: String! @index
-  isManager: Boolean! @index  # Com índice para consultas eficientes
+  isManager: Boolean!
   isCreator: Boolean!
-  isMember: Boolean! @index 
+  isMember: Boolean! 
   communityAddress: String! @index
   lastIndexedAt: BigInt!
   points: Int!
