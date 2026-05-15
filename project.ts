@@ -8,8 +8,23 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 
 // Get environment from .env file
-const dotenvBasePath = path.resolve(__dirname, '.env');
-dotenv.config({ path: dotenvBasePath });
+// Try multiple paths to find .env file
+const possiblePaths = [
+  path.resolve(__dirname, '.env'),           // dist/.env
+  path.resolve(__dirname, '..', '.env'),     // indexer/.env (most likely)
+  path.resolve(__dirname, '..', '..', '.env') // root/.env
+];
+
+for (const envPath of possiblePaths) {
+  const result = dotenv.config({ path: envPath });
+  if (!result.error) {
+    console.log(`Loaded .env from: ${envPath}`);
+    break;
+  }
+}
+
+// Also try loading without specific path (uses process.cwd())
+dotenv.config();
 
 const testnetEndpoints = [
   "https://rpc.ankr.com/http/stellar_testnet_horizon",
@@ -19,8 +34,7 @@ const testnetEndpoints = [
 
 const mainnetEndpoints = [
   "https://horizon.stellar.org",
-  "https://rpc.ankr.com/http/stellar_horizon",
-  "https://stellar.publicnode.com",
+  "https://horizon.stellar.lobstr.co",
 ];
 
 const mode = process.env.NODE_ENV || 'testnet';

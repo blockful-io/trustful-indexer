@@ -4,27 +4,25 @@ name: soroban-starter
 version: 0.0.1
 runner:
   node:
-    name: '@subql/node-stellar'
-    version: '*'
+    name: "@subql/node-stellar"
+    version: "*"
   query:
-    name: '@subql/query'
-    version: '*'
-description: >-
-  This project can be use as a starting point for developing your new Stellar
-  SubQuery project (mainnet)
-repository: 'https://github.com/subquery/stellar-subql-starter'
+    name: "@subql/query"
+    version: "*"
+description: This project can be use as a starting point for developing your new
+  Stellar SubQuery project (mainnet)
+repository: https://github.com/subquery/stellar-subql-starter
 schema:
   file: ./schema.graphql
 network:
-  chainId: Test SDF Network ; September 2015
+  chainId: Public Global Stellar Network ; September 2015
   endpoint:
-    - 'https://rpc.ankr.com/http/stellar_testnet_horizon'
-    - 'https://horizon-testnet.stellar.org'
-    - 'https://lb.nodies.app/v1/b4138b83de73401284f25ff83b9ce30d'
-  sorobanEndpoint: 'https://soroban-testnet.stellar.org'
+    - https://horizon.stellar.org
+    - https://horizon.stellar.lobstr.co
+  sorobanEndpoint: https://soroban-rpc.mainnet.stellar.gateway.fm
 dataSources:
   - kind: stellar/Runtime
-    startBlock: 326750
+    startBlock: 62530000
     mapping:
       file: ./dist/index.js
       handlers:
@@ -76,11 +74,11 @@ dataSources:
             topics:
               - scorer
               - create
-            contractId: CDAYITQNHRKI4776QLVKCGBGANZLKFGKMEFGCO7QDOEJDJJGT47MS7H6
+            contractId: CBVQVSWZWDTIPJ46A6U7KIHTEP7PHRL5ZG5LNRKHO5OAV2CHNXVY5D2R
         - handler: handlerScorerFactoryRemoveCommunity
           kind: soroban/EventHandler
           filter:
             topics:
               - scorer
               - remove
-            contractId: CDAYITQNHRKI4776QLVKCGBGANZLKFGKMEFGCO7QDOEJDJJGT47MS7H6
+            contractId: CBVQVSWZWDTIPJ46A6U7KIHTEP7PHRL5ZG5LNRKHO5OAV2CHNXVY5D2R
