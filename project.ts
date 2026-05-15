@@ -33,17 +33,8 @@ const testnetEndpoints = [
 ];
 
 const mainnetEndpoints = [
-  // QuikNode key returned 403 on 2026-05-15 — endpoint is dead/revoked.
-  // "https://autumn-sly-sunset.stellar-mainnet.quiknode.pro/e2f9e649f4af80676cbfd9a10da3f3061cf2ea9f",
   "https://horizon.stellar.org",
-  // Lobstr's public Horizon. Verified 2026-05-15: same network passphrase,
-  // same chain head as horizon.stellar.org, proper https self-links.
-  // Acts as a failover/load-distribution target when stellar.org throws 429.
   "https://horizon.stellar.lobstr.co",
-  // Ankr returns _links with http:// (verified 2026-05-15: bug still present).
-  // stellar-sdk follows these broken links and throws NotFoundError. Do not enable.
-  // "https://rpc.ankr.com/http/stellar_horizon",
-  // "https://rpc.ankr.com/premium-http/stellar_horizon/cdd5efa03c7336ae2512ae8a3dd70d7e3cfae9a37978093c73d507ae7e377050"
 ];
 
 const mode = process.env.NODE_ENV || 'testnet';
