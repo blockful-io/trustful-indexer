@@ -53,7 +53,7 @@ services:
       - -f=/app
       - --db-schema=public
       - --workers=1
-      - --batch-size=1
+      - --batch-size=10
       - --timeout=120000
       - --unsafe
     networks:

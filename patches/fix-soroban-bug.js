@@ -8,6 +8,16 @@ let lastValidLedger = null;
 let requestCount = 0;
 let lastLoggedLedger = null; // Para evitar logs repetidos do mesmo ledger
 
+// Rate-limit cooldown state — shared across ALL http(s) requests in the process.
+// When any response returns 429, cooldownUntil is set to now + backoff. Every
+// subsequent req.end() waits until that moment before dispatching. Backoff is
+// exponential per consecutive 429 burst, capped below SubQuery's --timeout=120000
+// so our hold never trips the request-timeout machinery.
+let cooldownUntil = 0;
+let consecutive429 = 0;
+const BACKOFF_BASE_MS = 2000;   // 2s on first 429
+const BACKOFF_MAX_MS = 60000;   // never hold a request longer than 60s
+
 // Hook no módulo HTTP/HTTPS para interceptar requisições
 const Module = require('module');
 const originalLoad = Module._load;
@@ -24,9 +34,24 @@ Module._load = function(request, parent) {
       const originalWrite = req.write;
       const originalEnd = req.end;
       const originalSetHeader = req.setHeader;
-      
+
       let requestStartLedger = null;
-      
+
+      // Hold req.end() until any active rate-limit cooldown expires.
+      // Writes still happen instantly (they only buffer), so headers and body
+      // are fully assembled — we just delay the final socket flush.
+      req.end = function(...endArgs) {
+        const self = this;
+        const now = Date.now();
+        const delay = cooldownUntil > now ? cooldownUntil - now : 0;
+        if (delay > 0) {
+          console.log(`[SOROBAN-PATCH] ⏳ Rate-limit cooldown: holding request ${delay}ms (consecutive 429s: ${consecutive429})`);
+          setTimeout(() => originalEnd.apply(self, endArgs), delay);
+          return self;
+        }
+        return originalEnd.apply(self, endArgs);
+      };
+
       req.write = function(data) {
         try {
           const originalLength = data.length;
@@ -37,7 +62,12 @@ Module._load = function(request, parent) {
           if (body && body.method === 'getEvents' && body.params) {
             requestCount++;
             const hasStartLedger = body.params.startLedger > 0;
-            const hasCursor = body.params.cursor;
+            // Soroban RPC nests the cursor under pagination.cursor; an older
+            // patch revision only looked at params.cursor, which is never set,
+            // so paginated continuations were misidentified as "no cursor" and
+            // a startLedger was injected — producing
+            // "ledger ranges and cursor cannot both be set".
+            const hasCursor = !!(body.params.cursor || body.params.pagination?.cursor);
             const originalLimit = body.params.pagination?.limit;
             
             // FORÇAR LIMITE MAIOR PARA PEGAR TODOS OS EVENTOS DE UMA VEZ
@@ -94,6 +124,22 @@ Module._load = function(request, parent) {
       
       // Interceptar resposta e filtrar eventos
       req.on('response', (res) => {
+        // Rate-limit feedback loop: 429 arms the cooldown, success resets it.
+        // Runs for EVERY response (Horizon /ledgers, Soroban getEvents, anything),
+        // because all upstreams share the same per-IP rate-limit bucket.
+        if (res.statusCode === 429) {
+          consecutive429++;
+          const backoff = Math.min(
+            BACKOFF_BASE_MS * Math.pow(2, consecutive429 - 1),
+            BACKOFF_MAX_MS
+          );
+          cooldownUntil = Math.max(cooldownUntil, Date.now() + backoff);
+          console.log(`[SOROBAN-PATCH] 🛑 HTTP 429 from upstream. Backoff #${consecutive429}: ${backoff}ms`);
+        } else if (res.statusCode >= 200 && res.statusCode < 300 && consecutive429 > 0) {
+          console.log(`[SOROBAN-PATCH] ✅ Rate limit recovered (was ${consecutive429} consecutive 429s)`);
+          consecutive429 = 0;
+        }
+
         // Aumentar limite de listeners para evitar warnings com múltiplas requisições simultâneas
         res.setMaxListeners(50);
         

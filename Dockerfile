@@ -24,7 +24,7 @@ RUN rm -f .env
 # Create .env file BEFORE build (so project.ts can read it during build)
 RUN echo 'CHAIN_ID=Public Global Stellar Network ; September 2015' > /app/.env && \
     echo 'SOROBAN_ENDPOINT=https://soroban-rpc.mainnet.stellar.gateway.fm' >> /app/.env && \
-    echo 'START_BLOCK=58419000' >> /app/.env && \
+    echo 'START_BLOCK=62530000' >> /app/.env && \
     echo 'NODE_ENV=mainnet' >> /app/.env && \
     echo 'SCORER_FACTORY_CONTRACT_ID=CBUUV6HRJYAUI24GPZTIKKPBMD5RYHTA2BBSIBK6N63EHV35LTP6L3FZ' >> /app/.env && \
     echo 'ENDPOINT=https://horizon.stellar.org' >> /app/.env
@@ -56,4 +56,4 @@ RUN echo '#!/bin/sh' > /entrypoint.sh && \
 ENTRYPOINT ["/entrypoint.sh"]
 
 # Default command
-CMD ["-f=/app", "--db-schema=public", "--workers=1", "--batch-size=1", "--timeout=120000", "--unsafe"]
+CMD ["-f=/app", "--db-schema=public", "--workers=1", "--batch-size=10", "--timeout=120000", "--unsafe"]
